@@ -7,15 +7,22 @@ import PageEdit from "../pages/PageEdit";
 import PropertiesManager from "../pages/PropertiesManager";
 import TestimonialsManager from "../pages/TestimonialsManager";
 import Login from "../pages/Login";
+
 import PropertyHome from "../pages/PropertyHome";
 import Accommodations from "../pages/Accommodations";
 import Wedding from "../pages/Wedding";
 import Gallery from "../pages/Gallery";
 import Restaurant from "../pages/Restaurant";
 import MassageSpa from "../pages/MassageSpa";
+<<<<<<< HEAD
+=======
+
+import AccomodationManager from "../pages/AccommodationManager";
+>>>>>>> 77e7775e3b5b8faa9018f44dea76bae2c86daa0b
 import RestaurantManager from "../pages/RestaurantManager";
 import WeddingManager from "../pages/WeddingManager";
 import GalleryManager from "../pages/GalleryManager";
+import MeetingManager from "../pages/MeetingManager";
 
 export default function AppRoutes() {
   return (
@@ -30,6 +37,7 @@ export default function AppRoutes() {
 
         <Route path="restaurant" element={<RestaurantManager />} />
         <Route path="wedding" element={<WeddingManager />} />
+        <Route path="meeting" element={<MeetingManager />} />
         <Route path="gallery" element={<GalleryManager />} />
 
         <Route path="property/home" element={<PropertyHome />} />
@@ -38,6 +46,16 @@ export default function AppRoutes() {
         <Route path="property/gallery" element={<Gallery />} />
         <Route path="property/restaurant" element={<Restaurant />} />
         <Route path="property/massage-spa" element={<MassageSpa />} />
+        <Route path="property">
+          <Route path="home" element={<PropertyHome />} />
+          <Route path="accommodations" element={<Accommodations />} />
+          <Route path="wedding" element={<Wedding />} />
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="restaurant" element={<Restaurant />} />
+          <Route path="massage-spa" element={<MassageSpa />} />
+
+          <Route path="meeting" element={<MeetingManager />} />
+        </Route>
 
         <Route path="testimonials" element={<TestimonialsManager />} />
       </Route>
