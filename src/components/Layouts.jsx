@@ -15,6 +15,7 @@ import {
   Heart,
   Image,
   Flower,
+  Calendar,
 } from "lucide-react";
 
 const navItems = [
@@ -35,13 +36,14 @@ export default function Layouts() {
   };
 
   const propertyItems = [
-    { name: "Home", path: "/admin/property/home", icon: Home },
-    // { name: "Accommodation", path: "/admin/accommodation", icon: BedDouble },
-    { name: "Restaurant", path: "/admin/restaurant", icon: UtensilsCrossed },
-    { name: "Wedding", path: "/admin/wedding", icon: Heart },
-    { name: "Gallery", path: "/admin/gallery", icon: Image },
-    { name: "Massage & Spa", path: "/admin/property/massage-spa", icon: Flower },
-  ];
+  { name: "Home", path: "/admin/property/home", icon: Home },
+  // { name: "Accommodation", path: "/admin/accommodation", icon: BedDouble },
+  { name: "Meeting", path: "/admin/property/meeting", icon: Calendar },
+  { name: "Wedding", path: "/admin/wedding", icon: Heart },
+  { name: "Restaurant", path: "/admin/restaurant", icon: UtensilsCrossed },
+  { name: "Massage & Spa", path: "/admin/property/massage-spa", icon: Flower },
+  { name: "Gallery", path: "/admin/gallery", icon: Image },
+];
 
   return (
     <div className="flex h-screen bg-slate-50">
