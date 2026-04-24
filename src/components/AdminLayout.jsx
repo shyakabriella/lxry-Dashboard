@@ -9,17 +9,24 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
+  Bed,
+  Heart,
+  Image,
+  Utensils,
+  Flower,
 } from "lucide-react";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/admin/homepage", icon: Home, label: "Homepage Content" },
-  { to: "/admin/properties", icon: Building2, label: "Properties" },
+  { to: "/admin/property", icon: Building2, label: "Property" },
   { to: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
 ];
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [propertyMenuOpen, setPropertyMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -63,25 +70,142 @@ export default function AdminLayout() {
         </div>
 
         <nav className="mt-4 space-y-1 px-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-amber-500/20 text-amber-400"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`
-              }
-            >
-              <item.icon size={18} />
-              {item.label}
-              <ChevronRight size={14} className="ml-auto opacity-50" />
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            // Special handling for Property with submenu
+            if (item.to === "/admin/property") {
+              return (
+                <div key={item.to}>
+                  <button
+                    onClick={() => setPropertyMenuOpen(!propertyMenuOpen)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                      propertyMenuOpen
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                    {propertyMenuOpen ? (
+                      <ChevronDown size={14} className="ml-auto opacity-50" />
+                    ) : (
+                      <ChevronRight size={14} className="ml-auto opacity-50" />
+                    )}
+                  </button>
+                  
+                  {/* Submenu */}
+                  {propertyMenuOpen && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      <NavLink
+                        to="/admin/property/home"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Home size={16} />
+                        Home
+                      </NavLink>
+                      <NavLink
+                        to="/admin/accommodation"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Bed size={16} />
+                        Accommodations
+                      </NavLink>
+                      <NavLink
+                        to="/admin/wedding"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Heart size={16} />
+                        Wedding
+                      </NavLink>
+                      <NavLink
+                        to="/admin/gallery"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Image size={16} />
+                        Gallery
+                      </NavLink>
+                      <NavLink
+                        to="/admin/restaurant"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Utensils size={16} />
+                        Restaurant
+                      </NavLink>
+                      <NavLink
+                        to="/admin/property/massage-spa"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Flower size={16} />
+                        Massage & Spa
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Default rendering for other nav items
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                <item.icon size={18} />
+                {item.label}
+                <ChevronRight size={14} className="ml-auto opacity-50" />
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-slate-700 p-3">

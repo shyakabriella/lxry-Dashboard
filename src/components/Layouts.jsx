@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Home,
@@ -9,22 +9,39 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
+  BedDouble,
+  UtensilsCrossed,
+  Heart,
+  Image,
+  Flower,
 } from "lucide-react";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/admin/homepage", icon: Home, label: "Homepage Content" },
-  { to: "/admin/properties", icon: Building2, label: "Properties" },
+  // { to: "/admin/homepage", icon: Home, label: "Homepage Content" },
+  { to: "/admin/property", icon: Building2, label: "Property" },
   { to: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
 ];
 
 export default function Layouts() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openProperty, setOpenProperty] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     navigate("/login");
   };
+
+  const propertyItems = [
+    { name: "Home", path: "/admin/property/home", icon: Home },
+    // { name: "Accommodation", path: "/admin/accommodation", icon: BedDouble },
+    { name: "Restaurant", path: "/admin/restaurant", icon: UtensilsCrossed },
+    { name: "Wedding", path: "/admin/wedding", icon: Heart },
+    { name: "Gallery", path: "/admin/gallery", icon: Image },
+    { name: "Massage & Spa", path: "/admin/property/massage-spa", icon: Flower },
+  ];
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -63,25 +80,76 @@ export default function Layouts() {
         </div>
 
         <nav className="mt-4 space-y-1 px-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-amber-500/20 text-amber-400"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`
-              }
-            >
-              <item.icon size={18} />
-              {item.label}
-              <ChevronRight size={14} className="ml-auto opacity-50" />
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            // 👇 Replace ONLY Property behavior
+            if (item.label === "Property") {
+              return (
+                <div key={item.to}>
+                  <button
+                    onClick={() => setOpenProperty(!openProperty)}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                    {openProperty ? (
+                      <ChevronDown size={14} className="ml-auto opacity-50" />
+                    ) : (
+                      <ChevronRight size={14} className="ml-auto opacity-50" />
+                    )}
+                  </button>
+
+                  {/* Submenu */}
+                  {openProperty && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {propertyItems.map((sub, i) => {
+                        const Icon = sub.icon;
+                        const isActive = location.pathname === sub.path;
+
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              navigate(sub.path);
+                              setSidebarOpen(false);
+                            }}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${
+                              isActive
+                                ? "bg-amber-500/20 text-amber-400"
+                                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                            }`}
+                          >
+                            <Icon size={16} />
+                            {sub.name}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // ✅ Everything else untouched
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                <item.icon size={18} />
+                {item.label}
+                <ChevronRight size={14} className="ml-auto opacity-50" />
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-slate-700 p-3">

@@ -29,12 +29,12 @@ export default function Dashboard() {
       link: "/admin/homepage",
     },
     {
-      label: "Properties",
-      value: data.properties.length,
+      label: "Property",
+      value: data.property.length,
       icon: Building2,
       color: "from-emerald-500 to-teal-600",
       bgLight: "bg-emerald-50",
-      link: "/admin/properties",
+      link: "/admin/property",
     },
     {
       label: "Testimonials",
@@ -45,12 +45,12 @@ export default function Dashboard() {
       link: "/admin/testimonials",
     },
     {
-      label: "Featured Properties",
-      value: data.properties.filter((p) => p.featured).length,
+      label: "Featured Property",
+      value: data.property.filter((p) => p.featured).length,
       icon: TrendingUp,
       color: "from-rose-500 to-pink-600",
       bgLight: "bg-rose-50",
-      link: "/admin/properties",
+      link: "/admin/property",
     },
   ];
 
@@ -88,19 +88,19 @@ export default function Dashboard() {
 
       {/* Quick overview */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Properties */}
+        {/* Recent Property */}
         <div className="rounded-xl border border-slate-200 bg-white p-6">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-semibold text-slate-900">Properties Overview</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Property Overview</h3>
             <Link
-              to="/admin/properties"
+              to="/admin/property"
               className="text-sm font-medium text-amber-600 hover:text-amber-700"
             >
               Manage
             </Link>
           </div>
           <div className="space-y-3">
-            {data.properties.map((prop) => (
+            {data.property.map((prop) => (
               <div
                 key={prop.id}
                 className="flex items-center gap-4 rounded-lg border border-slate-100 p-3"

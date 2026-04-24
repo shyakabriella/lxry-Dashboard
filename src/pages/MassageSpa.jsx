@@ -22,7 +22,7 @@ const sectionLabels = {
 
 };
 
-export default function HomepageManager() {
+export default function MassageSpa() {
   const [data, setData] = useState(null);
   const [activeSection, setActiveSection] = useState("hero");
   const [editedSection, setEditedSection] = useState(null);

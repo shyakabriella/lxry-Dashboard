@@ -96,14 +96,14 @@ export default function PropertiesManager() {
 
     let updatedProperties;
     if (isCreating) {
-      updatedProperties = [...data.properties, editedProperty];
+      updatedProperties = [...data.property, editedProperty];
     } else {
-      updatedProperties = data.properties.map((p) =>
+      updatedProperties = data.property.map((p) =>
         p.id === editedProperty.id ? editedProperty : p
       );
     }
 
-    const updated = { ...data, properties: updatedProperties };
+    const updated = { ...data, property: updatedProperties };
     saveSiteData(updated);
     setData(updated);
     setSelectedProperty(editedProperty);
@@ -116,7 +116,7 @@ export default function PropertiesManager() {
     if (!confirm(`Delete "${editedProperty.name}"? This cannot be undone.`)) return;
 
     const updatedProperties = data.properties.filter((p) => p.id !== editedProperty.id);
-    const updated = { ...data, properties: updatedProperties };
+    const updated = { ...data, property: updatedProperties };
     saveSiteData(updated);
     setData(updated);
     setSelectedProperty(null);
@@ -136,7 +136,7 @@ export default function PropertiesManager() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Properties</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Property</h1>
           <p className="mt-1 text-sm text-slate-500">
             Manage venue spaces — click a card to edit its content
           </p>
@@ -156,7 +156,7 @@ export default function PropertiesManager() {
           <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
             Click a card to edit
           </p>
-          {data.properties.map((prop) => (
+          {data.property.map((prop) => (
             <button
               key={prop.id}
               onClick={() => selectProperty(prop)}

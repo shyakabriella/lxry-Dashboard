@@ -39,7 +39,7 @@ export interface SiteData {
     features: HomepageSection;
     cta: HomepageSection;
   };
-  properties: Property[];
+  property: Property[];
   testimonials: Testimonial[];
 }
 
@@ -52,7 +52,7 @@ const defaultData: SiteData = {
       content: "Nestled in the heart of Kigali, Rwanda, Luxury Garden Palace offers an exquisite wedding venue and luxury accommodation experience. Our stunning gardens, world-class service, and breathtaking architecture create the perfect backdrop for your most cherished moments.",
       imageUrl: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
       ctaText: "Explore Our Venue",
-      ctaLink: "#properties",
+      ctaLink: "#property",
     },
     about: {
       id: "about",
@@ -82,7 +82,7 @@ const defaultData: SiteData = {
       ctaLink: "#contact",
     },
   },
-  properties: [
+  property: [
     {
       id: "prop-1",
       name: "Grand Ballroom",

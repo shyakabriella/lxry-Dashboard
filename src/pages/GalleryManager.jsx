@@ -22,7 +22,7 @@ const sectionLabels = {
 
 };
 
-export default function HomepageManager() {
+export default function GalleryManager() {
   const [data, setData] = useState(null);
   const [activeSection, setActiveSection] = useState("hero");
   const [editedSection, setEditedSection] = useState(null);
