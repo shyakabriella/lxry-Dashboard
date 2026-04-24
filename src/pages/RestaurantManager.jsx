@@ -7,19 +7,8 @@ import { Save, RotateCcw, Check, Image, Type, Link2, AlertCircle } from "lucide-
 
 const sectionLabels = {
   hero: "Hero Section",
-  about_one: "About Section Above",
-  about_two: "About Section Below",
-  for_every_event: "For Every Event Section",
-  accomodation: "Accomodation Section",
-  luxury_lay_of_land: "The Luxury Layout of Land Section",
-  multiple_images: "Multiple Images Section",
-  fitness: "Fitness Section",
-  parking: "Parking Section",
-  restaurant_bar_experience: "Restaurant & Bar Experience Section",
-  massage: "Massage & Spa Section",
-  infinity_pool: "Infinity Pool Experience Section",
-  family_xperience_kids_zone: "Family Experience & Kids Zone Section"
-
+  restaurant: "Restaurant Section",
+  bar: "Bar Section",
 };
 
 export default function RestaurantManager() {
@@ -95,8 +84,8 @@ export default function RestaurantManager() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Homepage Content</h1>
-          <p className="mt-1 text-sm text-slate-500">Edit the content displayed on your homepage</p>
+          <h1 className="text-2xl font-bold text-slate-900">Restaurant Content</h1>
+          <p className="mt-1 text-sm text-slate-500">Edit the content displayed on your restaurant</p>
         </div>
         <div className="flex items-center gap-2">
           {saved && (
@@ -133,7 +122,7 @@ export default function RestaurantManager() {
           <button
             key={key}
             onClick={() => switchSection(key)}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+            className={`flex-1 flex justify-center items-center rounded-lg px-4 py-2.5 text-[10px] transition-all ${
               activeSection === key
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"

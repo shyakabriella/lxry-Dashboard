@@ -133,7 +133,7 @@ export default function MassageSpa() {
           <button
             key={key}
             onClick={() => switchSection(key)}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+            className={`flex-1 rounded-lg px-4 py-2.5 text-[10px] transition-all ${
               activeSection === key
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
