@@ -14,11 +14,8 @@ import Wedding from "../pages/Wedding";
 import Gallery from "../pages/Gallery";
 import Restaurant from "../pages/Restaurant";
 import MassageSpa from "../pages/MassageSpa";
-<<<<<<< HEAD
-=======
 
 import AccomodationManager from "../pages/AccommodationManager";
->>>>>>> 77e7775e3b5b8faa9018f44dea76bae2c86daa0b
 import RestaurantManager from "../pages/RestaurantManager";
 import WeddingManager from "../pages/WeddingManager";
 import GalleryManager from "../pages/GalleryManager";
