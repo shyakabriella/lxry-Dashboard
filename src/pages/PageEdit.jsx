@@ -24,6 +24,7 @@ const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 const STORAGE_KEY = "luxury_homepage_sections";
 
 const homeSections = [
+  { id: 0, slug: "welcome-section", title: "Welcome Section" },
   { id: 1, slug: "home-section-one", title: "Home Section One" },
   { id: 2, slug: "home-section-two", title: "Home Section Two" },
   { id: 3, slug: "home-section-three", title: "Home Section Three" },
@@ -32,9 +33,10 @@ const homeSections = [
   { id: 6, slug: "home-section-six", title: "Home Section Six Gallery" },
   { id: 7, slug: "home-section-seven", title: "Home Section Seven Fitness" },
   { id: 8, slug: "home-section-eight", title: "Home Section Eight Parking" },
-  { id: 9, slug: "home-section-nine", title: "Home Section Nine" },
-  { id: 10, slug: "home-section-ten", title: "Home Section Ten" },
-  { id: 11, slug: "home-section-eleven", title: "Home Section Eleven" },
+  { id: 9, slug: "home-section-nine", title: "Home Section Nine Restaurant Bar" },
+  { id: 10, slug: "home-section-ten", title: "Home Section Ten Sauna" },
+  { id: 11, slug: "home-section-eleven", title: "Home Section Eleven Pool" },
+  { id: 12, slug: "home-section-twelve", title: "Home Section Twelve Family Kids" },
 ];
 
 const emptyGenericForm = {
@@ -45,6 +47,23 @@ const emptyGenericForm = {
   buttonText: "",
   buttonLink: "",
   isActive: true,
+};
+
+const emptyWelcomeSlideForm = {
+  id: null,
+  title: "",
+  subtitle: "",
+  description: "",
+  button_text: "",
+  button_link: "",
+  image: "",
+  image_url: "",
+  imageFile: null,
+  imageFiles: [],
+  imagePreview: "",
+  imagePreviews: [],
+  sort_order: 0,
+  is_active: true,
 };
 
 const emptySectionThreeForm = {
@@ -132,6 +151,14 @@ function buildImageUrl(path) {
     return path;
   }
 
+  if (path.startsWith("/storage/")) {
+    return `${API_ROOT_URL}${path}`;
+  }
+
+  if (path.startsWith("storage/")) {
+    return `${API_ROOT_URL}/${path}`;
+  }
+
   return `${API_ROOT_URL}/storage/${path}`;
 }
 
@@ -159,7 +186,46 @@ function getErrorMessage(data, fields, fallback) {
 }
 
 function getImageValue(item) {
-  return item?.image || item?.image_url || "";
+  return item?.image || item?.image_url || item?.image_path || "";
+}
+
+function getPublicPath(sectionName) {
+  const paths = {
+    fitness: "section7/fitness",
+    parking: "section8/parking",
+    "restaurant-bar": "section9/restaurant-bar",
+    sauna: "section10/sauna",
+    pool: "section11/pool",
+    "family-kids": "section12/family-kids",
+  };
+
+  return paths[sectionName];
+}
+
+function getAdminPath(sectionName) {
+  const paths = {
+    fitness: "admin/section7/fitness",
+    parking: "admin/section8/parking",
+    "restaurant-bar": "admin/section9/restaurant-bar",
+    sauna: "admin/section10/sauna",
+    pool: "admin/section11/pool",
+    "family-kids": "admin/section12/family-kids",
+  };
+
+  return paths[sectionName];
+}
+
+function getSectionTitle(sectionName) {
+  const titles = {
+    fitness: "Section 7 Fitness",
+    parking: "Section 8 Parking",
+    "restaurant-bar": "Section 9 Restaurant Bar",
+    sauna: "Section 10 Sauna",
+    pool: "Section 11 Pool",
+    "family-kids": "Section 12 Family Kids",
+  };
+
+  return titles[sectionName] || "Section";
 }
 
 export default function PageEdit() {
@@ -170,27 +236,41 @@ export default function PageEdit() {
     return homeSections.find((section) => section.slug === sectionSlug);
   }, [sectionSlug]);
 
+  const isWelcomeSection = sectionSlug === "welcome-section";
   const isSectionThree = sectionSlug === "home-section-three";
   const isSectionFour = sectionSlug === "home-section-four";
   const isSectionFive = sectionSlug === "home-section-five";
   const isSectionSix = sectionSlug === "home-section-six";
   const isSectionSeven = sectionSlug === "home-section-seven";
   const isSectionEight = sectionSlug === "home-section-eight";
+  const isSectionNine = sectionSlug === "home-section-nine";
+  const isSectionTen = sectionSlug === "home-section-ten";
+  const isSectionEleven = sectionSlug === "home-section-eleven";
+  const isSectionTwelve = sectionSlug === "home-section-twelve";
 
   const isLaravelApiSection =
+    isWelcomeSection ||
     isSectionThree ||
     isSectionFour ||
     isSectionFive ||
     isSectionSix ||
     isSectionSeven ||
-    isSectionEight;
+    isSectionEight ||
+    isSectionNine ||
+    isSectionTen ||
+    isSectionEleven ||
+    isSectionTwelve;
 
   const [form, setForm] = useState(emptyGenericForm);
+
+  const [welcomeSlideForm, setWelcomeSlideForm] = useState(
+    emptyWelcomeSlideForm
+  );
+  const [welcomeSlides, setWelcomeSlides] = useState([]);
 
   const [sectionThreeForm, setSectionThreeForm] = useState(
     emptySectionThreeForm
   );
-
   const [sectionFourForm, setSectionFourForm] = useState(emptySectionFourForm);
   const [sectionFiveForm, setSectionFiveForm] = useState(emptySectionFiveForm);
 
@@ -199,8 +279,13 @@ export default function PageEdit() {
 
   const [sectionSevenForm, setSectionSevenForm] =
     useState(emptyUrlContentForm);
-
   const [sectionEightForm, setSectionEightForm] =
+    useState(emptyUrlContentForm);
+  const [sectionNineForm, setSectionNineForm] = useState(emptyUrlContentForm);
+  const [sectionTenForm, setSectionTenForm] = useState(emptyUrlContentForm);
+  const [sectionElevenForm, setSectionElevenForm] =
+    useState(emptyUrlContentForm);
+  const [sectionTwelveForm, setSectionTwelveForm] =
     useState(emptyUrlContentForm);
 
   const [savedData, setSavedData] = useState(null);
@@ -216,6 +301,11 @@ export default function PageEdit() {
 
     setError("");
     setSavedMessage(false);
+
+    if (isWelcomeSection) {
+      fetchWelcomeSlides();
+      return;
+    }
 
     if (isSectionThree) {
       fetchSectionThree();
@@ -238,12 +328,32 @@ export default function PageEdit() {
     }
 
     if (isSectionSeven) {
-      fetchSectionSeven();
+      fetchUrlContentSection("fitness");
       return;
     }
 
     if (isSectionEight) {
-      fetchSectionEight();
+      fetchUrlContentSection("parking");
+      return;
+    }
+
+    if (isSectionNine) {
+      fetchUrlContentSection("restaurant-bar");
+      return;
+    }
+
+    if (isSectionTen) {
+      fetchUrlContentSection("sauna");
+      return;
+    }
+
+    if (isSectionEleven) {
+      fetchUrlContentSection("pool");
+      return;
+    }
+
+    if (isSectionTwelve) {
+      fetchUrlContentSection("family-kids");
       return;
     }
 
@@ -259,13 +369,82 @@ export default function PageEdit() {
     }
   }, [
     currentSection,
+    isWelcomeSection,
     isSectionThree,
     isSectionFour,
     isSectionFive,
     isSectionSix,
     isSectionSeven,
     isSectionEight,
+    isSectionNine,
+    isSectionTen,
+    isSectionEleven,
+    isSectionTwelve,
   ]);
+
+  const setUrlContentFormBySection = (sectionName, data) => {
+    if (sectionName === "fitness") setSectionSevenForm(data);
+    if (sectionName === "parking") setSectionEightForm(data);
+    if (sectionName === "restaurant-bar") setSectionNineForm(data);
+    if (sectionName === "sauna") setSectionTenForm(data);
+    if (sectionName === "pool") setSectionElevenForm(data);
+    if (sectionName === "family-kids") setSectionTwelveForm(data);
+  };
+
+  const getUrlContentFormBySection = (sectionName) => {
+    if (sectionName === "fitness") return sectionSevenForm;
+    if (sectionName === "parking") return sectionEightForm;
+    if (sectionName === "restaurant-bar") return sectionNineForm;
+    if (sectionName === "sauna") return sectionTenForm;
+    if (sectionName === "pool") return sectionElevenForm;
+    if (sectionName === "family-kids") return sectionTwelveForm;
+
+    return emptyUrlContentForm;
+  };
+
+  const fetchWelcomeSlides = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_BASE_URL}/welcome-slides`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load Welcome Slides.");
+      }
+
+      const slides = getItems(data).map((item) => {
+        const imageValue = getImageValue(item);
+
+        return {
+          ...item,
+          image: imageValue,
+          image_url: imageValue,
+          imagePreview: buildImageUrl(imageValue),
+          is_active: toBoolean(item.is_active),
+        };
+      });
+
+      setWelcomeSlides(slides);
+      setSavedData(slides);
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+    } catch (err) {
+      setWelcomeSlides([]);
+      setSavedData([]);
+      setError(
+        err.message || "Something went wrong while loading welcome slides."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchSectionThree = async () => {
     try {
@@ -419,7 +598,7 @@ export default function PageEdit() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/section-6-gallery/active`, {
+      const response = await fetch(`${API_BASE_URL}/section6/gallery`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -455,12 +634,13 @@ export default function PageEdit() {
     }
   };
 
-  const fetchSectionSeven = async () => {
+  const fetchUrlContentSection = async (sectionName) => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/section-7-fitness`, {
+      const publicPath = getPublicPath(sectionName);
+      const response = await fetch(`${API_BASE_URL}/${publicPath}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -470,19 +650,21 @@ export default function PageEdit() {
       const data = await response.json();
 
       if (response.status === 404) {
-        setSectionSevenForm(emptyUrlContentForm);
+        setUrlContentFormBySection(sectionName, emptyUrlContentForm);
         setSavedData(null);
         return;
       }
 
       if (!response.ok) {
-        throw new Error(data?.message || "Failed to load Section 7 Fitness.");
+        throw new Error(
+          data?.message || `Failed to load ${getSectionTitle(sectionName)}.`
+        );
       }
 
       const item = data?.data || null;
 
       if (!item) {
-        setSectionSevenForm(emptyUrlContentForm);
+        setUrlContentFormBySection(sectionName, emptyUrlContentForm);
         setSavedData(null);
         return;
       }
@@ -498,66 +680,16 @@ export default function PageEdit() {
         image_url: imageValue,
         imageFile: null,
         imagePreview: buildImageUrl(imageValue),
+        updatedAt: item.updated_at || item.updatedAt || "",
       };
 
-      setSectionSevenForm(formatted);
+      setUrlContentFormBySection(sectionName, formatted);
       setSavedData(formatted);
     } catch (err) {
-      setError(err.message || "Something went wrong while loading fitness.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSectionEight = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch(`${API_BASE_URL}/section-8-parking`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.status === 404) {
-        setSectionEightForm(emptyUrlContentForm);
-        setSavedData(null);
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to load Section 8 Parking.");
-      }
-
-      const item = data?.data || null;
-
-      if (!item) {
-        setSectionEightForm(emptyUrlContentForm);
-        setSavedData(null);
-        return;
-      }
-
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title: item.title || "",
-        subtitle: item.subtitle || "",
-        description: item.description || "",
-        image: imageValue,
-        image_url: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-      };
-
-      setSectionEightForm(formatted);
-      setSavedData(formatted);
-    } catch (err) {
-      setError(err.message || "Something went wrong while loading parking.");
+      setError(
+        err.message ||
+          `Something went wrong while loading ${getSectionTitle(sectionName)}.`
+      );
     } finally {
       setLoading(false);
     }
@@ -588,63 +720,57 @@ export default function PageEdit() {
   }
 
   const updateGenericField = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
 
+  const updateWelcomeSlideField = (field, value) => {
+    setWelcomeSlideForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionThreeField = (field, value) => {
-    setSectionThreeForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
+    setSectionThreeForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionFourField = (field, value) => {
-    setSectionFourForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
+    setSectionFourForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionFiveField = (field, value) => {
-    setSectionFiveForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
+    setSectionFiveForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionSixField = (field, value) => {
-    setSectionSixForm((prev) => ({
-      ...prev,
+    setSectionSixForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
+
+  const updateUrlContentField = (sectionName, field, value) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
       [field]: value,
-    }));
+    });
 
     setSavedMessage(false);
   };
 
-  const updateSectionSevenField = (field, value) => {
-    setSectionSevenForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleWelcomeSlideImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
 
-    setSavedMessage(false);
-  };
+    if (!files.length) return;
 
-  const updateSectionEightField = (field, value) => {
-    setSectionEightForm((prev) => ({
+    setWelcomeSlideForm((prev) => ({
       ...prev,
-      [field]: value,
+      imageFile: files[0],
+      imageFiles: files,
+      imagePreview: URL.createObjectURL(files[0]),
+      imagePreviews: files.map((file) => URL.createObjectURL(file)),
     }));
 
     setSavedMessage(false);
@@ -706,30 +832,18 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
-  const handleSectionSevenImageChange = (e) => {
+  const handleUrlContentImageChange = (sectionName, e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    setSectionSevenForm((prev) => ({
-      ...prev,
+    const currentForm = getUrlContentFormBySection(sectionName);
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
       imageFile: file,
       imagePreview: URL.createObjectURL(file),
-    }));
-
-    setSavedMessage(false);
-  };
-
-  const handleSectionEightImageChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setSectionEightForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
+    });
 
     setSavedMessage(false);
   };
@@ -761,6 +875,120 @@ export default function PageEdit() {
     setTimeout(() => {
       setSavedMessage(false);
     }, 2500);
+  };
+
+  const saveSingleWelcomeSlide = async ({ file, isUpdate }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const url = isUpdate
+      ? `${API_BASE_URL}/admin/welcome-slides/${welcomeSlideForm.id}`
+      : `${API_BASE_URL}/admin/welcome-slides`;
+
+    const formData = new FormData();
+
+    formData.append("title", welcomeSlideForm.title);
+    formData.append("subtitle", welcomeSlideForm.subtitle || "");
+
+    if (welcomeSlideForm.description) {
+      formData.append("description", welcomeSlideForm.description);
+    }
+
+    if (welcomeSlideForm.button_text) {
+      formData.append("button_text", welcomeSlideForm.button_text);
+    }
+
+    if (welcomeSlideForm.button_link) {
+      formData.append("button_link", welcomeSlideForm.button_link);
+    }
+
+    formData.append("sort_order", welcomeSlideForm.sort_order || 0);
+    formData.append("is_active", welcomeSlideForm.is_active ? "1" : "0");
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        [
+          "title",
+          "subtitle",
+          "description",
+          "button_text",
+          "button_link",
+          "image",
+          "sort_order",
+          "is_active",
+        ],
+        "Failed to save Welcome Slide."
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
+  };
+
+  const handleWelcomeSlideSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const isUpdate = Boolean(welcomeSlideForm.id);
+      const selectedFiles = welcomeSlideForm.imageFiles || [];
+
+      if (!isUpdate && !selectedFiles.length) {
+        throw new Error("Please upload at least one welcome image first.");
+      }
+
+      if (isUpdate) {
+        await saveSingleWelcomeSlide({
+          file: welcomeSlideForm.imageFile,
+          isUpdate: true,
+        });
+      } else {
+        for (const file of selectedFiles) {
+          await saveSingleWelcomeSlide({
+            file,
+            isUpdate: false,
+          });
+        }
+      }
+
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+      await fetchWelcomeSlides();
+
+      setSavedMessage(true);
+
+      setTimeout(() => {
+        setSavedMessage(false);
+      }, 2500);
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving welcome slide.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSectionThreeSave = async () => {
@@ -1076,8 +1304,8 @@ export default function PageEdit() {
       const isUpdate = Boolean(sectionSixForm.id);
 
       const url = isUpdate
-        ? `${API_BASE_URL}/section-6-gallery/${sectionSixForm.id}`
-        : `${API_BASE_URL}/section-6-gallery`;
+        ? `${API_BASE_URL}/admin/section6/gallery/${sectionSixForm.id}`
+        : `${API_BASE_URL}/admin/section6/gallery`;
 
       const formData = new FormData();
 
@@ -1131,6 +1359,166 @@ export default function PageEdit() {
     }
   };
 
+  const handleUrlContentSave = async (sectionName) => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const activeForm = getUrlContentFormBySection(sectionName);
+      const adminPath = getAdminPath(sectionName);
+      const isUpdate = Boolean(activeForm.id);
+
+      if (!activeForm.imageFile && !isUpdate) {
+        throw new Error("Please upload an image first.");
+      }
+
+      const url = isUpdate
+        ? `${API_BASE_URL}/${adminPath}/${activeForm.id}`
+        : `${API_BASE_URL}/${adminPath}`;
+
+      const formData = new FormData();
+
+      formData.append("title", activeForm.title);
+      formData.append("subtitle", activeForm.subtitle);
+      formData.append("description", activeForm.description);
+
+      if (activeForm.imageFile) {
+        formData.append("image", activeForm.imageFile);
+      }
+
+      if (isUpdate) {
+        formData.append("_method", "PUT");
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = getErrorMessage(
+          data,
+          ["title", "subtitle", "description", "image"],
+          `Failed to save ${getSectionTitle(sectionName)}.`
+        );
+
+        throw new Error(message);
+      }
+
+      const item = data?.data || data;
+      const imageValue = getImageValue(item);
+
+      const formatted = {
+        id: item.id,
+        title: item.title || "",
+        subtitle: item.subtitle || "",
+        description: item.description || "",
+        image: imageValue,
+        image_url: imageValue,
+        imageFile: null,
+        imagePreview: buildImageUrl(imageValue),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setUrlContentFormBySection(sectionName, formatted);
+      setSavedData(formatted);
+      setSavedMessage(true);
+
+      setTimeout(() => {
+        setSavedMessage(false);
+      }, 2500);
+    } catch (err) {
+      setError(
+        err.message ||
+          `Something went wrong while saving ${getSectionTitle(sectionName)}.`
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleWelcomeSlideEdit = (slide) => {
+    const imageValue = getImageValue(slide);
+
+    setWelcomeSlideForm({
+      id: slide.id,
+      title: slide.title || "",
+      subtitle: slide.subtitle || "",
+      description: slide.description || "",
+      button_text: slide.button_text || "",
+      button_link: slide.button_link || "",
+      image: imageValue,
+      image_url: imageValue,
+      imageFile: null,
+      imageFiles: [],
+      imagePreview: buildImageUrl(imageValue),
+      imagePreviews: [],
+      sort_order: slide.sort_order ?? 0,
+      is_active: toBoolean(slide.is_active),
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleWelcomeSlideDelete = async (slideId) => {
+    if (!confirm("Delete this welcome slide?")) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/welcome-slides/${slideId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to delete welcome slide.");
+      }
+
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+      await fetchWelcomeSlides();
+
+      setSavedMessage(true);
+
+      setTimeout(() => {
+        setSavedMessage(false);
+      }, 2500);
+    } catch (err) {
+      setError(err.message || "Something went wrong while deleting welcome slide.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSectionSixEdit = (image) => {
     const imageValue = getImageValue(image);
 
@@ -1162,7 +1550,7 @@ export default function PageEdit() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/section-6-gallery/${imageId}`,
+        `${API_BASE_URL}/admin/section6/gallery/${imageId}`,
         {
           method: "DELETE",
           headers: {
@@ -1193,106 +1581,12 @@ export default function PageEdit() {
     }
   };
 
-  const handleUrlContentSave = async (sectionName) => {
-    try {
-      setSaving(true);
-      setError("");
-      setSavedMessage(false);
-
-      const token = getToken();
-
-      if (!token) {
-        throw new Error("You are not logged in. Please login again.");
-      }
-
-      const activeForm =
-        sectionName === "fitness" ? sectionSevenForm : sectionEightForm;
-
-      const basePath =
-        sectionName === "fitness" ? "section-7-fitness" : "section-8-parking";
-
-      const isUpdate = Boolean(activeForm.id);
-
-      if (!activeForm.imageFile && !isUpdate) {
-        throw new Error("Please upload an image first.");
-      }
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/${basePath}/${activeForm.id}`
-        : `${API_BASE_URL}/${basePath}`;
-
-      const formData = new FormData();
-
-      formData.append("title", activeForm.title);
-      formData.append("subtitle", activeForm.subtitle);
-      formData.append("description", activeForm.description);
-
-      if (activeForm.imageFile) {
-        formData.append("image", activeForm.imageFile);
-      }
-
-      if (isUpdate) {
-        formData.append("_method", "PUT");
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const message = getErrorMessage(
-          data,
-          ["title", "subtitle", "description", "image"],
-          `Failed to save ${
-            sectionName === "fitness" ? "Section 7 Fitness" : "Section 8 Parking"
-          }.`
-        );
-
-        throw new Error(message);
-      }
-
-      const item = data?.data || data;
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title: item.title || "",
-        subtitle: item.subtitle || "",
-        description: item.description || "",
-        image: imageValue,
-        image_url: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        updatedAt: new Date().toISOString(),
-      };
-
-      if (sectionName === "fitness") {
-        setSectionSevenForm(formatted);
-      } else {
-        setSectionEightForm(formatted);
-      }
-
-      setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
-    } catch (err) {
-      setError(err.message || "Something went wrong while saving content.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSave = () => {
+    if (isWelcomeSection) {
+      handleWelcomeSlideSave();
+      return;
+    }
+
     if (isSectionThree) {
       handleSectionThreeSave();
       return;
@@ -1323,13 +1617,35 @@ export default function PageEdit() {
       return;
     }
 
+    if (isSectionNine) {
+      handleUrlContentSave("restaurant-bar");
+      return;
+    }
+
+    if (isSectionTen) {
+      handleUrlContentSave("sauna");
+      return;
+    }
+
+    if (isSectionEleven) {
+      handleUrlContentSave("pool");
+      return;
+    }
+
+    if (isSectionTwelve) {
+      handleUrlContentSave("family-kids");
+      return;
+    }
+
     handleGenericSave();
   };
 
   const handleClear = () => {
     if (!confirm("Clear this section form?")) return;
 
-    if (isSectionThree) {
+    if (isWelcomeSection) {
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+    } else if (isSectionThree) {
       setSectionThreeForm((prev) => ({
         ...emptySectionThreeForm,
         id: prev.id,
@@ -1353,27 +1669,117 @@ export default function PageEdit() {
     } else if (isSectionSix) {
       setSectionSixForm(emptySectionSixForm);
     } else if (isSectionSeven) {
-      setSectionSevenForm((prev) => ({
-        ...emptyUrlContentForm,
-        id: prev.id,
-        image: prev.image,
-        image_url: prev.image_url,
-        imagePreview: prev.imagePreview,
-      }));
+      keepUrlImageOnClear("fitness");
     } else if (isSectionEight) {
-      setSectionEightForm((prev) => ({
-        ...emptyUrlContentForm,
-        id: prev.id,
-        image: prev.image,
-        image_url: prev.image_url,
-        imagePreview: prev.imagePreview,
-      }));
+      keepUrlImageOnClear("parking");
+    } else if (isSectionNine) {
+      keepUrlImageOnClear("restaurant-bar");
+    } else if (isSectionTen) {
+      keepUrlImageOnClear("sauna");
+    } else if (isSectionEleven) {
+      keepUrlImageOnClear("pool");
+    } else if (isSectionTwelve) {
+      keepUrlImageOnClear("family-kids");
     } else {
       setForm(emptyGenericForm);
     }
 
     setSavedMessage(false);
     setError("");
+  };
+
+  const keepUrlImageOnClear = (sectionName) => {
+    const prev = getUrlContentFormBySection(sectionName);
+
+    setUrlContentFormBySection(sectionName, {
+      ...emptyUrlContentForm,
+      id: prev.id,
+      image: prev.image,
+      image_url: prev.image_url,
+      imagePreview: prev.imagePreview,
+    });
+  };
+
+  const renderWelcomeSlideForm = () => {
+    return (
+      <div className="space-y-5">
+        {welcomeSlideForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing welcome slide #{welcomeSlideForm.id}. Click “Clear Form” to
+            add new slides instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Add welcome slides for the homepage hero area. You can select more
+            than one image at the same time.
+          </div>
+        )}
+
+        <InputField
+          label="Title"
+          value={welcomeSlideForm.title}
+          onChange={(value) => updateWelcomeSlideField("title", value)}
+          placeholder="Enter welcome title"
+        />
+
+        <InputField
+          label="Subtitle"
+          value={welcomeSlideForm.subtitle}
+          onChange={(value) => updateWelcomeSlideField("subtitle", value)}
+          placeholder="Enter welcome subtitle"
+        />
+
+        <TextareaField
+          label="Description"
+          value={welcomeSlideForm.description}
+          onChange={(value) => updateWelcomeSlideField("description", value)}
+          placeholder="Enter welcome description"
+        />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <InputField
+            label="Button Text"
+            value={welcomeSlideForm.button_text}
+            onChange={(value) => updateWelcomeSlideField("button_text", value)}
+            placeholder="Example: Book Now"
+          />
+
+          <InputField
+            label="Button Link"
+            icon={Link2}
+            value={welcomeSlideForm.button_link}
+            onChange={(value) => updateWelcomeSlideField("button_link", value)}
+            placeholder="Example: /booking or #rooms"
+          />
+        </div>
+
+        <InputField
+          label="Sort Order"
+          type="number"
+          value={welcomeSlideForm.sort_order}
+          onChange={(value) => updateWelcomeSlideField("sort_order", value)}
+          placeholder="Example: 1"
+        />
+
+        <ActiveToggle
+          label="Active Slide"
+          checked={welcomeSlideForm.is_active}
+          onChange={(value) => updateWelcomeSlideField("is_active", value)}
+        />
+
+        <ImageUploadField
+          multiple={!welcomeSlideForm.id}
+          preview={welcomeSlideForm.imagePreview}
+          previews={welcomeSlideForm.imagePreviews}
+          onChange={handleWelcomeSlideImageChange}
+          maxText={
+            welcomeSlideForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+      </div>
+    );
   };
 
   const renderSectionThreeForm = () => {
@@ -1566,7 +1972,7 @@ export default function PageEdit() {
 
   const renderUrlContentForm = (
     activeForm,
-    updateField,
+    sectionName,
     labelPrefix,
     onImageChange
   ) => {
@@ -1575,21 +1981,25 @@ export default function PageEdit() {
         <InputField
           label="Title"
           value={activeForm.title}
-          onChange={(value) => updateField("title", value)}
+          onChange={(value) => updateUrlContentField(sectionName, "title", value)}
           placeholder={`Enter ${labelPrefix} title`}
         />
 
         <InputField
           label="Subtitle"
           value={activeForm.subtitle}
-          onChange={(value) => updateField("subtitle", value)}
+          onChange={(value) =>
+            updateUrlContentField(sectionName, "subtitle", value)
+          }
           placeholder={`Enter ${labelPrefix} subtitle`}
         />
 
         <TextareaField
           label="Description"
           value={activeForm.description}
-          onChange={(value) => updateField("description", value)}
+          onChange={(value) =>
+            updateUrlContentField(sectionName, "description", value)
+          }
           placeholder={`Enter ${labelPrefix} description`}
         />
 
@@ -1657,6 +2067,106 @@ export default function PageEdit() {
           checked={form.isActive}
           onChange={(value) => updateGenericField("isActive", value)}
         />
+      </div>
+    );
+  };
+
+  const renderWelcomeSlidePreview = () => {
+    if (!welcomeSlides.length) {
+      return renderEmptyPreview("No welcome slides saved yet");
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Welcome Slides: {welcomeSlides.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Click edit to update a welcome slide, or delete to remove it.
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          {welcomeSlides.map((slide) => (
+            <div
+              key={slide.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={slide.imagePreview}
+                  alt={slide.title || `Welcome slide ${slide.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <SectionBadge>Welcome #{slide.id}</SectionBadge>
+
+                  <StatusBadge active={toBoolean(slide.is_active)} />
+
+                  {slide.sort_order !== undefined && (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                      Sort: {slide.sort_order}
+                    </span>
+                  )}
+                </div>
+
+                {slide.subtitle && <EyebrowText>{slide.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {slide.title || "No title saved"}
+                </h3>
+
+                {slide.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {slide.description}
+                  </p>
+                )}
+
+                {slide.button_text && (
+                  <div className="pt-2">
+                    <span className="inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white">
+                      {slide.button_text}
+                    </span>
+
+                    {slide.button_link && (
+                      <p className="mt-2 text-xs text-slate-400">
+                        Link: {slide.button_link}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomeSlideEdit(slide)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomeSlideDelete(slide.id)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -1936,6 +2446,7 @@ export default function PageEdit() {
   };
 
   const getForm = () => {
+    if (isWelcomeSection) return renderWelcomeSlideForm();
     if (isSectionThree) return renderSectionThreeForm();
     if (isSectionFour) return renderSectionFourForm();
     if (isSectionFive) return renderSectionFiveForm();
@@ -1944,18 +2455,54 @@ export default function PageEdit() {
     if (isSectionSeven) {
       return renderUrlContentForm(
         sectionSevenForm,
-        updateSectionSevenField,
         "fitness",
-        handleSectionSevenImageChange
+        "fitness",
+        (e) => handleUrlContentImageChange("fitness", e)
       );
     }
 
     if (isSectionEight) {
       return renderUrlContentForm(
         sectionEightForm,
-        updateSectionEightField,
         "parking",
-        handleSectionEightImageChange
+        "parking",
+        (e) => handleUrlContentImageChange("parking", e)
+      );
+    }
+
+    if (isSectionNine) {
+      return renderUrlContentForm(
+        sectionNineForm,
+        "restaurant-bar",
+        "restaurant and bar",
+        (e) => handleUrlContentImageChange("restaurant-bar", e)
+      );
+    }
+
+    if (isSectionTen) {
+      return renderUrlContentForm(
+        sectionTenForm,
+        "sauna",
+        "sauna",
+        (e) => handleUrlContentImageChange("sauna", e)
+      );
+    }
+
+    if (isSectionEleven) {
+      return renderUrlContentForm(
+        sectionElevenForm,
+        "pool",
+        "pool",
+        (e) => handleUrlContentImageChange("pool", e)
+      );
+    }
+
+    if (isSectionTwelve) {
+      return renderUrlContentForm(
+        sectionTwelveForm,
+        "family-kids",
+        "family and kids",
+        (e) => handleUrlContentImageChange("family-kids", e)
       );
     }
 
@@ -1963,6 +2510,7 @@ export default function PageEdit() {
   };
 
   const getPreview = () => {
+    if (isWelcomeSection) return renderWelcomeSlidePreview();
     if (isSectionThree) return renderSectionThreePreview();
     if (isSectionFour) return renderSectionFourPreview();
     if (isSectionFive) return renderSectionFivePreview();
@@ -1982,11 +2530,45 @@ export default function PageEdit() {
       );
     }
 
+    if (isSectionNine) {
+      return renderUrlContentPreview(
+        savedData,
+        "No saved restaurant and bar section content yet"
+      );
+    }
+
+    if (isSectionTen) {
+      return renderUrlContentPreview(
+        savedData,
+        "No saved sauna section content yet"
+      );
+    }
+
+    if (isSectionEleven) {
+      return renderUrlContentPreview(
+        savedData,
+        "No saved pool section content yet"
+      );
+    }
+
+    if (isSectionTwelve) {
+      return renderUrlContentPreview(
+        savedData,
+        "No saved family and kids section content yet"
+      );
+    }
+
     return renderGenericPreview();
   };
 
   const getSaveButtonText = () => {
     if (saving) return "Saving...";
+
+    if (isWelcomeSection && welcomeSlideForm.id) return "Update Slide";
+    if (isWelcomeSection) {
+      const count = welcomeSlideForm.imageFiles?.length || 0;
+      return count > 1 ? `Add ${count} Slides` : "Add Slide";
+    }
 
     if (isSectionSix && sectionSixForm.id) return "Update Image";
     if (isSectionSix) return "Add Image";
@@ -2043,11 +2625,17 @@ export default function PageEdit() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5">
               <h2 className="text-lg font-bold text-slate-900">
-                {isSectionSix ? "Manage Gallery Image" : "Update Section"}
+                {isWelcomeSection
+                  ? "Manage Welcome Slide"
+                  : isSectionSix
+                  ? "Manage Gallery Image"
+                  : "Update Section"}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                {isSectionSix
+                {isWelcomeSection
+                  ? "Add, update, or remove welcome slides."
+                  : isSectionSix
                   ? "Upload, update, or remove gallery images."
                   : "Fill this form and click save."}
               </p>
@@ -2064,7 +2652,8 @@ export default function PageEdit() {
               >
                 {saving ? (
                   <Loader2 size={16} className="animate-spin" />
-                ) : isSectionSix && !sectionSixForm.id ? (
+                ) : (isWelcomeSection && !welcomeSlideForm.id) ||
+                  (isSectionSix && !sectionSixForm.id) ? (
                   <Plus size={16} />
                 ) : (
                   <Save size={16} />
@@ -2154,7 +2743,13 @@ function TextareaField({ label, value, onChange, placeholder }) {
   );
 }
 
-function ImageUploadField({ preview, onChange, maxText }) {
+function ImageUploadField({
+  preview,
+  previews = [],
+  onChange,
+  maxText,
+  multiple = false,
+}) {
   return (
     <div>
       <label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -2166,7 +2761,7 @@ function ImageUploadField({ preview, onChange, maxText }) {
         <Upload size={24} className="mb-2 text-amber-500" />
 
         <span className="text-sm font-semibold text-slate-700">
-          Click to upload image
+          {multiple ? "Click to upload images" : "Click to upload image"}
         </span>
 
         <span className="mt-1 text-xs text-slate-400">{maxText}</span>
@@ -2175,11 +2770,27 @@ function ImageUploadField({ preview, onChange, maxText }) {
           type="file"
           accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={onChange}
+          multiple={multiple}
           className="hidden"
         />
       </label>
 
-      {preview && (
+      {previews.length > 1 ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {previews.map((item, index) => (
+            <div
+              key={`${item}-${index}`}
+              className="overflow-hidden rounded-xl border border-slate-200"
+            >
+              <img
+                src={item}
+                alt={`Selected preview ${index + 1}`}
+                className="h-32 w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      ) : preview ? (
         <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
           <img
             src={preview}
@@ -2187,7 +2798,7 @@ function ImageUploadField({ preview, onChange, maxText }) {
             className="h-48 w-full object-cover"
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

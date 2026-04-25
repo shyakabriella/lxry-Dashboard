@@ -3,6 +3,12 @@ import { ArrowRight, Home, Layers } from "lucide-react";
 
 const homeSections = [
   {
+    id: 0,
+    slug: "welcome-section",
+    title: "Welcome Section",
+    description: "Manage homepage welcome slider content",
+  },
+  {
     id: 1,
     slug: "home-section-one",
     title: "Home Section One",
@@ -35,38 +41,44 @@ const homeSections = [
   {
     id: 6,
     slug: "home-section-six",
-    title: "Home Section Six",
-    description: "Manage section six content",
+    title: "Home Section Six Gallery",
+    description: "Manage gallery images",
   },
   {
     id: 7,
     slug: "home-section-seven",
-    title: "Home Section Seven",
-    description: "Manage section seven content",
+    title: "Home Section Seven Fitness",
+    description: "Manage fitness section content",
   },
   {
     id: 8,
     slug: "home-section-eight",
-    title: "Home Section Eight",
-    description: "Manage section eight content",
+    title: "Home Section Eight Parking",
+    description: "Manage parking section content",
   },
   {
     id: 9,
     slug: "home-section-nine",
-    title: "Home Section Nine",
-    description: "Manage section nine content",
+    title: "Home Section Nine Restaurant & Bar",
+    description: "Manage restaurant and bar section",
   },
   {
     id: 10,
     slug: "home-section-ten",
-    title: "Home Section Ten",
-    description: "Manage section ten content",
+    title: "Home Section Ten Sauna",
+    description: "Manage sauna section content",
   },
   {
     id: 11,
     slug: "home-section-eleven",
-    title: "Home Section Eleven",
-    description: "Manage section eleven content",
+    title: "Home Section Eleven Pool",
+    description: "Manage pool section content",
+  },
+  {
+    id: 12,
+    slug: "home-section-twelve",
+    title: "Home Section Twelve Family & Kids",
+    description: "Manage family and kids section content",
   },
 ];
 
@@ -96,7 +108,7 @@ export default function HomepageManager() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {homeSections.map((section) => (
           <Link
-            key={section.id}
+            key={section.slug}
             to={`/admin/homepage/${section.slug}`}
             className="group rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
           >
@@ -106,7 +118,7 @@ export default function HomepageManager() {
               </div>
 
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
-                #{section.id}
+                {section.id === 0 ? "Welcome" : `#${section.id}`}
               </span>
             </div>
 
