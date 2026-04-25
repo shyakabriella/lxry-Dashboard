@@ -810,13 +810,13 @@ export default function PageEdit() {
         return {
           file,
           preview,
-          title: prev.title || "",
-          subtitle: prev.subtitle || "",
-          description: prev.description || "",
-          button_text: prev.button_text || "",
-          button_link: prev.button_link || "",
-          sort_order: Number(prev.sort_order || 0) + index,
-          is_active: prev.is_active,
+          title: "",
+          subtitle: "",
+          description: "",
+          button_text: "",
+          button_link: "",
+          sort_order: index + 1,
+          is_active: true,
         };
       });
 
@@ -1786,147 +1786,45 @@ export default function PageEdit() {
           </div>
         ) : (
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            Select one or more welcome images, then give every image its own
-            title and subtitle before saving.
+            Upload one or more welcome images. After upload, add a different
+            title and subtitle for each image.
           </div>
         )}
 
-        {welcomeSlideForm.id ? (
+        {welcomeSlideForm.id && (
           <>
-            <InputField
-              label="Title"
-              value={welcomeSlideForm.title}
-              onChange={(value) => updateWelcomeSlideField("title", value)}
-              placeholder="Enter welcome title"
-            />
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Title"
+                value={welcomeSlideForm.title}
+                onChange={(value) => updateWelcomeSlideField("title", value)}
+                placeholder="Enter welcome title"
+              />
 
-            <InputField
-              label="Subtitle"
-              value={welcomeSlideForm.subtitle}
-              onChange={(value) => updateWelcomeSlideField("subtitle", value)}
-              placeholder="Enter welcome subtitle"
-            />
-
-            <TextareaField
-              label="Description"
-              value={welcomeSlideForm.description}
-              onChange={(value) => updateWelcomeSlideField("description", value)}
-              placeholder="Enter welcome description"
-            />
+              <InputField
+                label="Subtitle"
+                value={welcomeSlideForm.subtitle}
+                onChange={(value) => updateWelcomeSlideField("subtitle", value)}
+                placeholder="Enter welcome subtitle"
+              />
+            </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <InputField
-                label="Button Text"
-                value={welcomeSlideForm.button_text}
-                onChange={(value) =>
-                  updateWelcomeSlideField("button_text", value)
-                }
-                placeholder="Example: Book Now"
-              />
-
-              <InputField
-                label="Button Link"
-                icon={Link2}
-                value={welcomeSlideForm.button_link}
-                onChange={(value) =>
-                  updateWelcomeSlideField("button_link", value)
-                }
-                placeholder="Example: /booking or #rooms"
-              />
-            </div>
-
-            <InputField
-              label="Sort Order"
-              type="number"
-              value={welcomeSlideForm.sort_order}
-              onChange={(value) => updateWelcomeSlideField("sort_order", value)}
-              placeholder="Example: 1"
-            />
-
-            <ActiveToggle
-              label="Active Slide"
-              checked={welcomeSlideForm.is_active}
-              onChange={(value) => updateWelcomeSlideField("is_active", value)}
-            />
-          </>
-        ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-800">
-              Default content for new selected images
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Fill these first if many slides share the same button or text.
-              You can still edit each selected image below.
-            </p>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <InputField
-                label="Default Title"
-                value={welcomeSlideForm.title}
-                onChange={(value) => updateWelcomeSlideField("title", value)}
-                placeholder="Example: Welcome to Luxury Garden Palace"
-              />
-
-              <InputField
-                label="Default Subtitle"
-                value={welcomeSlideForm.subtitle}
-                onChange={(value) => updateWelcomeSlideField("subtitle", value)}
-                placeholder="Example: Experience comfort and elegance"
-              />
-            </div>
-
-            <div className="mt-4">
-              <TextareaField
-                label="Default Description"
-                value={welcomeSlideForm.description}
-                onChange={(value) =>
-                  updateWelcomeSlideField("description", value)
-                }
-                placeholder="Optional description shared by selected slides"
-              />
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <InputField
-                label="Default Button Text"
-                value={welcomeSlideForm.button_text}
-                onChange={(value) =>
-                  updateWelcomeSlideField("button_text", value)
-                }
-                placeholder="Example: Book Now"
-              />
-
-              <InputField
-                label="Default Button Link"
-                icon={Link2}
-                value={welcomeSlideForm.button_link}
-                onChange={(value) =>
-                  updateWelcomeSlideField("button_link", value)
-                }
-                placeholder="Example: /booking or #rooms"
-              />
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <InputField
-                label="Start Sort Order"
+                label="Sort Order"
                 type="number"
                 value={welcomeSlideForm.sort_order}
-                onChange={(value) =>
-                  updateWelcomeSlideField("sort_order", value)
-                }
+                onChange={(value) => updateWelcomeSlideField("sort_order", value)}
                 placeholder="Example: 1"
               />
 
               <ActiveToggle
-                label="Active Slides"
+                label="Active Slide"
                 checked={welcomeSlideForm.is_active}
-                onChange={(value) =>
-                  updateWelcomeSlideField("is_active", value)
-                }
+                onChange={(value) => updateWelcomeSlideField("is_active", value)}
               />
             </div>
-          </div>
+          </>
         )}
 
         <ImageUploadField
@@ -1945,10 +1843,11 @@ export default function PageEdit() {
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Selected images slide details
+                Selected welcome images
               </h3>
               <p className="mt-1 text-xs text-slate-500">
-                Each image will be saved as its own welcome slide.
+                Each image will be saved as its own slide with its own title
+                and subtitle.
               </p>
             </div>
 
@@ -1988,7 +1887,7 @@ export default function PageEdit() {
                       onChange={(value) =>
                         updateWelcomeSlideDraft(index, "title", value)
                       }
-                      placeholder="Title for this image"
+                      placeholder="Example: Unforgettable"
                     />
 
                     <InputField
@@ -1997,39 +1896,11 @@ export default function PageEdit() {
                       onChange={(value) =>
                         updateWelcomeSlideDraft(index, "subtitle", value)
                       }
-                      placeholder="Subtitle for this image"
+                      placeholder="Example: Charm & Adventure"
                     />
                   </div>
 
-                  <TextareaField
-                    label="Image Description"
-                    value={draft.description}
-                    onChange={(value) =>
-                      updateWelcomeSlideDraft(index, "description", value)
-                    }
-                    placeholder="Optional description for this image"
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <InputField
-                      label="Button Text"
-                      value={draft.button_text}
-                      onChange={(value) =>
-                        updateWelcomeSlideDraft(index, "button_text", value)
-                      }
-                      placeholder="Example: Book Now"
-                    />
-
-                    <InputField
-                      label="Button Link"
-                      icon={Link2}
-                      value={draft.button_link}
-                      onChange={(value) =>
-                        updateWelcomeSlideDraft(index, "button_link", value)
-                      }
-                      placeholder="Example: /booking"
-                    />
-
+                  <div className="grid gap-4 md:grid-cols-2">
                     <InputField
                       label="Sort Order"
                       type="number"
@@ -2039,15 +1910,15 @@ export default function PageEdit() {
                       }
                       placeholder="1"
                     />
-                  </div>
 
-                  <ActiveToggle
-                    label="Active Slide"
-                    checked={draft.is_active}
-                    onChange={(value) =>
-                      updateWelcomeSlideDraft(index, "is_active", value)
-                    }
-                  />
+                    <ActiveToggle
+                      label="Active Slide"
+                      checked={draft.is_active}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "is_active", value)
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             ))}
