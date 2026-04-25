@@ -148,6 +148,8 @@ const emptySectionTenImageForm = {
   imagePreview: "",
   imagePreviews: [],
   slideDrafts: [],
+  sort_order: 0,
+  is_active: true,
 };
 
 function loadSections() {
@@ -268,6 +270,8 @@ function formatSectionTenImage(item) {
     image_url: imageValue,
     imageFile: null,
     imagePreview: buildImageUrl(imageValue),
+    sort_order: item.sort_order ?? 0,
+    is_active: toBoolean(item.is_active ?? true),
     updatedAt: item.updated_at || item.updatedAt || "",
   };
 }
@@ -376,16 +380,20 @@ export default function PageEdit() {
   const [sectionSixImages, setSectionSixImages] = useState([]);
 
   const [sectionSevenForm, setSectionSevenForm] =
-    useState(emptyUrlContentForm);
+    useState(emptySectionTenImageForm);
+  const [sectionSevenImages, setSectionSevenImages] = useState([]);
   const [sectionEightForm, setSectionEightForm] =
-    useState(emptyUrlContentForm);
-  const [sectionNineForm, setSectionNineForm] = useState(emptyUrlContentForm);
+    useState(emptySectionTenImageForm);
+  const [sectionEightImages, setSectionEightImages] = useState([]);
+  const [sectionNineForm, setSectionNineForm] = useState(emptySectionTenImageForm);
+  const [sectionNineImages, setSectionNineImages] = useState([]);
   const [sectionTenForm, setSectionTenForm] = useState(emptySectionTenImageForm);
   const [sectionTenImages, setSectionTenImages] = useState([]);
   const [sectionElevenForm, setSectionElevenForm] =
     useState(emptyUrlContentForm);
   const [sectionTwelveForm, setSectionTwelveForm] =
-    useState(emptyUrlContentForm);
+    useState(emptySectionTenImageForm);
+  const [sectionTwelveImages, setSectionTwelveImages] = useState([]);
 
   const [savedData, setSavedData] = useState(null);
 
@@ -508,6 +516,41 @@ export default function PageEdit() {
     if (sectionName === "family-kids") return sectionTwelveForm;
 
     return emptyUrlContentForm;
+  };
+
+  const isMultiUrlContentSection = (sectionName) =>
+    ["fitness", "parking", "restaurant-bar", "sauna", "family-kids"].includes(
+      sectionName
+    );
+
+  const setUrlContentImagesBySection = (sectionName, images) => {
+    if (sectionName === "fitness") setSectionSevenImages(images);
+    if (sectionName === "parking") setSectionEightImages(images);
+    if (sectionName === "restaurant-bar") setSectionNineImages(images);
+    if (sectionName === "sauna") setSectionTenImages(images);
+    if (sectionName === "family-kids") setSectionTwelveImages(images);
+  };
+
+  const getUrlContentImagesBySection = (sectionName) => {
+    if (sectionName === "fitness") return sectionSevenImages;
+    if (sectionName === "parking") return sectionEightImages;
+    if (sectionName === "restaurant-bar") return sectionNineImages;
+    if (sectionName === "sauna") return sectionTenImages;
+    if (sectionName === "family-kids") return sectionTwelveImages;
+
+    return [];
+  };
+
+  const getUrlContentLabel = (sectionName) => {
+    const labels = {
+      fitness: "Fitness",
+      parking: "Parking",
+      "restaurant-bar": "Restaurant and Bar",
+      sauna: "Sauna",
+      "family-kids": "Family and Kids",
+    };
+
+    return labels[sectionName] || getSectionTitle(sectionName);
   };
 
   const showSavedSuccess = () => {
@@ -785,9 +828,9 @@ export default function PageEdit() {
       const data = await response.json();
 
       if (response.status === 404) {
-        if (sectionName === "sauna") {
-          setSectionTenForm(emptySectionTenImageForm);
-          setSectionTenImages([]);
+        if (isMultiUrlContentSection(sectionName)) {
+          setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+          setUrlContentImagesBySection(sectionName, []);
         } else {
           setUrlContentFormBySection(sectionName, emptyUrlContentForm);
         }
@@ -801,10 +844,11 @@ export default function PageEdit() {
         );
       }
 
-      if (sectionName === "sauna") {
+      if (isMultiUrlContentSection(sectionName)) {
         const images = getItems(data).map(formatSectionTenImage).filter(Boolean);
-        setSectionTenImages(images);
-        setSectionTenForm(emptySectionTenImageForm);
+
+        setUrlContentImagesBySection(sectionName, images);
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
         setSavedData(images);
         return;
       }
@@ -834,10 +878,11 @@ export default function PageEdit() {
       setUrlContentFormBySection(sectionName, emptyUrlContentForm);
       setSavedData(formatted);
     } catch (err) {
-      if (sectionName === "sauna") {
-        setSectionTenImages([]);
-        setSectionTenForm(emptySectionTenImageForm);
+      if (isMultiUrlContentSection(sectionName)) {
+        setUrlContentImagesBySection(sectionName, []);
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
       }
+
       setError(
         err.message ||
           `Something went wrong while loading ${getSectionTitle(sectionName)}.`
@@ -1031,6 +1076,48 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
+
+  const updateUrlContentDraft = (sectionName, index, field, value) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+    const slideDrafts = [...(currentForm.slideDrafts || [])];
+
+    slideDrafts[index] = {
+      ...slideDrafts[index],
+      [field]: value,
+    };
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      slideDrafts,
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeUrlContentDraft = (sectionName, index) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+    const slideDrafts = (currentForm.slideDrafts || []).filter(
+      (_, itemIndex) => itemIndex !== index
+    );
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      imageFiles: slideDrafts.map((draft) => draft.file),
+      imageFile: slideDrafts[0]?.file || null,
+      imagePreview: slideDrafts[0]?.preview || "",
+      imagePreviews: slideDrafts.map((draft) => draft.preview),
+      slideDrafts,
+    });
+
+    setSavedMessage(false);
+  };
+
+  const updateSectionSevenDraft = (index, field, value) =>
+    updateUrlContentDraft("fitness", index, field, value);
+
+  const removeSectionSevenDraft = (index) =>
+    removeUrlContentDraft("fitness", index);
+
   const updateUrlContentField = (sectionName, field, value) => {
     const currentForm = getUrlContentFormBySection(sectionName);
 
@@ -1167,12 +1254,14 @@ export default function PageEdit() {
     }
 
     setSectionSixForm((prev) => {
-      const imageDrafts = files.map((file) => {
+      const imageDrafts = files.map((file, index) => {
         const preview = URL.createObjectURL(file);
 
         return {
           file,
           preview,
+          display_order: index + 1,
+          is_active: true,
         };
       });
 
@@ -1194,41 +1283,43 @@ export default function PageEdit() {
 
     if (!files.length) return;
 
-    if (sectionName === "sauna") {
-      if (sectionTenForm.id) {
+    if (isMultiUrlContentSection(sectionName)) {
+      const activeForm = getUrlContentFormBySection(sectionName);
+
+      if (activeForm.id) {
         const file = files[0];
 
-        setSectionTenForm((prev) => ({
-          ...prev,
+        setUrlContentFormBySection(sectionName, {
+          ...activeForm,
           imageFile: file,
           imagePreview: URL.createObjectURL(file),
-        }));
+        });
 
         setSavedMessage(false);
         return;
       }
 
-      setSectionTenForm((prev) => {
-        const slideDrafts = files.map((file) => {
-          const preview = URL.createObjectURL(file);
-
-          return {
-            file,
-            preview,
-            title: "",
-            subtitle: "",
-            description: "",
-          };
-        });
+      const slideDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
 
         return {
-          ...prev,
-          imageFile: files[0],
-          imageFiles: files,
-          imagePreview: slideDrafts[0]?.preview || "",
-          imagePreviews: slideDrafts.map((draft) => draft.preview),
-          slideDrafts,
+          file,
+          preview,
+          title: "",
+          subtitle: "",
+          description: "",
+          sort_order: index + 1,
+          is_active: true,
         };
+      });
+
+      setUrlContentFormBySection(sectionName, {
+        ...activeForm,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
       });
 
       setSavedMessage(false);
@@ -1806,7 +1897,7 @@ export default function PageEdit() {
     }
   };
 
-  const saveSingleSectionSixImage = async ({ file, isUpdate }) => {
+  const saveSingleSectionSixImage = async ({ file, isUpdate, displayOrder = null, isActive = null }) => {
     const token = getToken();
 
     if (!token) {
@@ -1823,11 +1914,14 @@ export default function PageEdit() {
       formData.append("image", file);
     }
 
-    if (sectionSixForm.display_order !== "") {
-      formData.append("display_order", sectionSixForm.display_order);
+    const finalDisplayOrder = displayOrder !== null ? displayOrder : sectionSixForm.display_order;
+
+    if (finalDisplayOrder !== "" && finalDisplayOrder !== null && finalDisplayOrder !== undefined) {
+      formData.append("display_order", finalDisplayOrder);
     }
 
-    formData.append("is_active", sectionSixForm.is_active ? "1" : "0");
+    const finalIsActive = isActive !== null ? isActive : sectionSixForm.is_active;
+    formData.append("is_active", finalIsActive ? "1" : "0");
 
     if (isUpdate) {
       formData.append("_method", "PUT");
@@ -1880,10 +1974,12 @@ export default function PageEdit() {
           throw new Error("Please select one or more gallery images first.");
         }
 
-        for (const draft of imageDrafts) {
+        for (const [index, draft] of imageDrafts.entries()) {
           await saveSingleSectionSixImage({
             file: draft.file,
             isUpdate: false,
+            displayOrder: draft.display_order ?? index + 1,
+            isActive: draft.is_active ?? true,
           });
         }
       }
@@ -1917,6 +2013,14 @@ export default function PageEdit() {
     formData.append("title", activeForm.title || "");
     formData.append("subtitle", activeForm.subtitle || "");
     formData.append("description", activeForm.description || "");
+
+    if (activeForm.sort_order !== "" && activeForm.sort_order !== null && activeForm.sort_order !== undefined) {
+      formData.append("sort_order", activeForm.sort_order);
+    }
+
+    if (activeForm.is_active !== undefined && activeForm.is_active !== null) {
+      formData.append("is_active", activeForm.is_active ? "1" : "0");
+    }
 
     if (file) {
       formData.append("image", file);
@@ -1956,23 +2060,33 @@ export default function PageEdit() {
       setError("");
       setSavedMessage(false);
 
-      if (sectionName === "sauna") {
-        const isUpdate = Boolean(sectionTenForm.id);
-        const slideDrafts = sectionTenForm.slideDrafts || [];
+      if (isMultiUrlContentSection(sectionName)) {
+        const activeForm = getUrlContentFormBySection(sectionName);
+        const sectionLabel = getUrlContentLabel(sectionName).toLowerCase();
+        const isUpdate = Boolean(activeForm.id);
+        const slideDrafts = activeForm.slideDrafts || [];
 
         if (isUpdate) {
-          if (!sectionTenForm.title.trim()) {
-            throw new Error("Please enter the sauna image title.");
+          if (!activeForm.title.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image title.`);
+          }
+
+          if (!activeForm.subtitle.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image subtitle.`);
+          }
+
+          if (!activeForm.description.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image description.`);
           }
 
           await saveSingleUrlContentImage({
             sectionName,
-            file: sectionTenForm.imageFile,
+            file: activeForm.imageFile,
             isUpdate: true,
           });
         } else {
           if (!slideDrafts.length) {
-            throw new Error("Please upload at least one sauna image first.");
+            throw new Error(`Please upload at least one ${sectionLabel} image first.`);
           }
 
           const missingTitleIndex = slideDrafts.findIndex(
@@ -1981,7 +2095,27 @@ export default function PageEdit() {
 
           if (missingTitleIndex !== -1) {
             throw new Error(
-              `Please enter a title for sauna image #${missingTitleIndex + 1}.`
+              `Please enter a title for ${sectionLabel} image #${missingTitleIndex + 1}.`
+            );
+          }
+
+          const missingSubtitleIndex = slideDrafts.findIndex(
+            (draft) => !draft.subtitle?.trim()
+          );
+
+          if (missingSubtitleIndex !== -1) {
+            throw new Error(
+              `Please enter a subtitle for ${sectionLabel} image #${missingSubtitleIndex + 1}.`
+            );
+          }
+
+          const missingDescriptionIndex = slideDrafts.findIndex(
+            (draft) => !draft.description?.trim()
+          );
+
+          if (missingDescriptionIndex !== -1) {
+            throw new Error(
+              `Please enter a description for ${sectionLabel} image #${missingDescriptionIndex + 1}.`
             );
           }
 
@@ -1995,8 +2129,8 @@ export default function PageEdit() {
           }
         }
 
-        setSectionTenForm(emptySectionTenImageForm);
-        await fetchUrlContentSection("sauna");
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+        await fetchUrlContentSection(sectionName);
         showSavedSuccess();
         return;
       }
@@ -2314,8 +2448,8 @@ export default function PageEdit() {
   const handleUrlContentEdit = (sectionName, data) => {
     if (!data) return;
 
-    if (sectionName === "sauna") {
-      setSectionTenForm({
+    if (isMultiUrlContentSection(sectionName)) {
+      setUrlContentFormBySection(sectionName, {
         ...emptySectionTenImageForm,
         ...data,
         imageFile: null,
@@ -2370,9 +2504,9 @@ export default function PageEdit() {
         throw new Error(data?.message || `Failed to delete ${getSectionTitle(sectionName)}.`);
       }
 
-      if (sectionName === "sauna") {
-        setSectionTenForm(emptySectionTenImageForm);
-        await fetchUrlContentSection("sauna");
+      if (isMultiUrlContentSection(sectionName)) {
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+        await fetchUrlContentSection(sectionName);
       } else {
         setUrlContentFormBySection(sectionName, emptyUrlContentForm);
         setSavedData(null);
@@ -2489,17 +2623,17 @@ export default function PageEdit() {
     } else if (isSectionSix) {
       setSectionSixForm(emptySectionSixForm);
     } else if (isSectionSeven) {
-      keepUrlImageOnClear("fitness");
+      setSectionSevenForm(emptySectionTenImageForm);
     } else if (isSectionEight) {
-      keepUrlImageOnClear("parking");
+      setUrlContentFormBySection("parking", emptySectionTenImageForm);
     } else if (isSectionNine) {
-      keepUrlImageOnClear("restaurant-bar");
+      setUrlContentFormBySection("restaurant-bar", emptySectionTenImageForm);
     } else if (isSectionTen) {
       setSectionTenForm(emptySectionTenImageForm);
     } else if (isSectionEleven) {
       keepUrlImageOnClear("pool");
     } else if (isSectionTwelve) {
-      keepUrlImageOnClear("family-kids");
+      setUrlContentFormBySection("family-kids", emptySectionTenImageForm);
     } else {
       setForm(emptyGenericForm);
     }
@@ -2995,6 +3129,252 @@ export default function PageEdit() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderMultiUrlContentForm = (sectionName, label, titlePlaceholder, subtitlePlaceholder) => {
+    const activeForm = getUrlContentFormBySection(sectionName);
+    const selectedDrafts = activeForm.slideDrafts || [];
+    const removeDraft = (index) => removeUrlContentDraft(sectionName, index);
+    const updateDraft = (index, field, value) =>
+      updateUrlContentDraft(sectionName, index, field, value);
+
+    return (
+      <div className="space-y-5">
+        {activeForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing {label} image #{activeForm.id}. Click “Clear Form” to add new images instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more {label.toLowerCase()} images. Each image will have its own title, subtitle, and description.
+          </div>
+        )}
+
+        {activeForm.id && (
+          <>
+            <InputField
+              label="Title"
+              value={activeForm.title}
+              onChange={(value) => updateUrlContentField(sectionName, "title", value)}
+              placeholder={titlePlaceholder || `Enter ${label.toLowerCase()} image title`}
+            />
+
+            <InputField
+              label="Subtitle"
+              value={activeForm.subtitle}
+              onChange={(value) => updateUrlContentField(sectionName, "subtitle", value)}
+              placeholder={subtitlePlaceholder || `Enter ${label.toLowerCase()} image subtitle`}
+            />
+
+            <TextareaField
+              label="Description"
+              value={activeForm.description}
+              onChange={(value) => updateUrlContentField(sectionName, "description", value)}
+              placeholder={`Enter ${label.toLowerCase()} image description`}
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!activeForm.id}
+          preview={activeForm.imagePreview}
+          previews={activeForm.id ? [] : activeForm.imagePreviews}
+          onChange={(e) => handleUrlContentImageChange(sectionName, e)}
+          maxText={
+            activeForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!activeForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected {label.toLowerCase()} images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title, subtitle, and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`${label} draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      {label} Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateDraft(index, "title", value)}
+                    placeholder={titlePlaceholder || `Enter ${label.toLowerCase()} title`}
+                  />
+
+                  <InputField
+                    label="Subtitle"
+                    value={draft.subtitle}
+                    onChange={(value) => updateDraft(index, "subtitle", value)}
+                    placeholder={subtitlePlaceholder || `Enter ${label.toLowerCase()} subtitle`}
+                  />
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) => updateDraft(index, "description", value)}
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSectionSevenForm = () => {
+    const selectedDrafts = sectionSevenForm.slideDrafts || [];
+
+    return (
+      <div className="space-y-5">
+        {sectionSevenForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing fitness image #{sectionSevenForm.id}. Click “Clear Form” to add new images instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more fitness images. Each image will have its own title, subtitle, and description.
+          </div>
+        )}
+
+        {sectionSevenForm.id && (
+          <>
+            <InputField
+              label="Title"
+              value={sectionSevenForm.title}
+              onChange={(value) => updateUrlContentField("fitness", "title", value)}
+              placeholder="Enter fitness image title"
+            />
+
+            <InputField
+              label="Subtitle"
+              value={sectionSevenForm.subtitle}
+              onChange={(value) => updateUrlContentField("fitness", "subtitle", value)}
+              placeholder="Enter fitness image subtitle"
+            />
+
+            <TextareaField
+              label="Description"
+              value={sectionSevenForm.description}
+              onChange={(value) => updateUrlContentField("fitness", "description", value)}
+              placeholder="Enter fitness image description"
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!sectionSevenForm.id}
+          preview={sectionSevenForm.imagePreview}
+          previews={sectionSevenForm.id ? [] : sectionSevenForm.imagePreviews}
+          onChange={(e) => handleUrlContentImageChange("fitness", e)}
+          maxText={
+            sectionSevenForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!sectionSevenForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected fitness images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title, subtitle, and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Fitness draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Fitness Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSectionSevenDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateSectionSevenDraft(index, "title", value)}
+                    placeholder="Example: Modern Fitness Center"
+                  />
+
+                  <InputField
+                    label="Subtitle"
+                    value={draft.subtitle}
+                    onChange={(value) => updateSectionSevenDraft(index, "subtitle", value)}
+                    placeholder="Example: Wellness and strength"
+                  />
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) => updateSectionSevenDraft(index, "description", value)}
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -3568,6 +3948,130 @@ export default function PageEdit() {
     );
   };
 
+  const renderMultiUrlContentPreview = (sectionName, label) => {
+    const images = getUrlContentImagesBySection(sectionName);
+
+    if (!images.length) {
+      return renderEmptyPreview(`No saved ${label.toLowerCase()} images yet`);
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved {label} Images: {images.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Each image can have its own title, subtitle, and description.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {images.map((image) => (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={image.imagePreview}
+                  alt={image.title || `${label} image ${image.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>{label} #{image.id}</SectionBadge>
+
+                {image.subtitle && <EyebrowText>{image.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {image.title || "No title saved"}
+                </h3>
+
+                {image.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {image.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleUrlContentEdit(sectionName, image)}
+                  onDelete={() => handleUrlContentDelete(sectionName, image.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSectionSevenPreview = () => {
+    if (!sectionSevenImages.length) {
+      return renderEmptyPreview("No saved fitness images yet");
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Fitness Images: {sectionSevenImages.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Each image can have its own title, subtitle, and description.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {sectionSevenImages.map((image) => (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={image.imagePreview}
+                  alt={image.title || `Fitness image ${image.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>Fitness #{image.id}</SectionBadge>
+
+                {image.subtitle && <EyebrowText>{image.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {image.title || "No title saved"}
+                </h3>
+
+                {image.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {image.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleUrlContentEdit("fitness", image)}
+                  onDelete={() => handleUrlContentDelete("fitness", image.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderSectionTenPreview = () => {
     if (!sectionTenImages.length) {
       return renderEmptyPreview("No saved sauna images yet");
@@ -3735,30 +4239,23 @@ export default function PageEdit() {
     if (isSectionFive) return renderSectionFiveForm();
     if (isSectionSix) return renderSectionSixForm();
 
-    if (isSectionSeven) {
-      return renderUrlContentForm(
-        sectionSevenForm,
-        "fitness",
-        "fitness",
-        (e) => handleUrlContentImageChange("fitness", e)
-      );
-    }
+    if (isSectionSeven) return renderSectionSevenForm();
 
     if (isSectionEight) {
-      return renderUrlContentForm(
-        sectionEightForm,
+      return renderMultiUrlContentForm(
         "parking",
-        "parking",
-        (e) => handleUrlContentImageChange("parking", e)
+        "Parking",
+        "Example: Secure Parking",
+        "Example: Easy and safe access"
       );
     }
 
     if (isSectionNine) {
-      return renderUrlContentForm(
-        sectionNineForm,
+      return renderMultiUrlContentForm(
         "restaurant-bar",
-        "restaurant and bar",
-        (e) => handleUrlContentImageChange("restaurant-bar", e)
+        "Restaurant and Bar",
+        "Example: Fine Dining",
+        "Example: Fresh meals and drinks"
       );
     }
 
@@ -3774,11 +4271,11 @@ export default function PageEdit() {
     }
 
     if (isSectionTwelve) {
-      return renderUrlContentForm(
-        sectionTwelveForm,
+      return renderMultiUrlContentForm(
         "family-kids",
-        "family and kids",
-        (e) => handleUrlContentImageChange("family-kids", e)
+        "Family and Kids",
+        "Example: Family Fun",
+        "Example: Safe and playful moments"
       );
     }
 
@@ -3792,29 +4289,12 @@ export default function PageEdit() {
     if (isSectionFive) return renderSectionFivePreview();
     if (isSectionSix) return renderSectionSixPreview();
 
-    if (isSectionSeven) {
-      return renderUrlContentPreview(
-        savedData,
-        "No saved fitness section content yet",
-        "fitness"
-      );
-    }
+    if (isSectionSeven) return renderSectionSevenPreview();
 
-    if (isSectionEight) {
-      return renderUrlContentPreview(
-        savedData,
-        "No saved parking section content yet",
-        "parking"
-      );
-    }
+    if (isSectionEight) return renderMultiUrlContentPreview("parking", "Parking");
 
-    if (isSectionNine) {
-      return renderUrlContentPreview(
-        savedData,
-        "No saved restaurant and bar section content yet",
-        "restaurant-bar"
-      );
-    }
+    if (isSectionNine)
+      return renderMultiUrlContentPreview("restaurant-bar", "Restaurant and Bar");
 
     if (isSectionTen) return renderSectionTenPreview();
 
@@ -3826,13 +4306,8 @@ export default function PageEdit() {
       );
     }
 
-    if (isSectionTwelve) {
-      return renderUrlContentPreview(
-        savedData,
-        "No saved family and kids section content yet",
-        "family-kids"
-      );
-    }
+    if (isSectionTwelve)
+      return renderMultiUrlContentPreview("family-kids", "Family and Kids");
 
     return renderGenericPreview();
   };
@@ -3846,6 +4321,26 @@ export default function PageEdit() {
       return count > 1 ? `Add ${count} Slides` : "Add Slide";
     }
 
+    if (isSectionSeven && sectionSevenForm.id) return "Update Fitness Image";
+    if (isSectionSeven) {
+      const count = sectionSevenForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Fitness Images` : "Add Fitness Image";
+    }
+
+    if (isSectionEight && sectionEightForm.id) return "Update Parking Image";
+    if (isSectionEight) {
+      const count = sectionEightForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Parking Images` : "Add Parking Image";
+    }
+
+    if (isSectionNine && sectionNineForm.id) return "Update Restaurant and Bar Image";
+    if (isSectionNine) {
+      const count = sectionNineForm.slideDrafts?.length || 0;
+      return count > 1
+        ? `Add ${count} Restaurant and Bar Images`
+        : "Add Restaurant and Bar Image";
+    }
+
     if (isSectionSix && sectionSixForm.id) return "Update Image";
     if (isSectionSix) {
       const count = sectionSixForm.imageDrafts?.length || 0;
@@ -3856,6 +4351,14 @@ export default function PageEdit() {
     if (isSectionTen) {
       const count = sectionTenForm.slideDrafts?.length || 0;
       return count > 1 ? `Add ${count} Sauna Images` : "Add Sauna Image";
+    }
+
+    if (isSectionTwelve && sectionTwelveForm.id) return "Update Family and Kids Image";
+    if (isSectionTwelve) {
+      const count = sectionTwelveForm.slideDrafts?.length || 0;
+      return count > 1
+        ? `Add ${count} Family and Kids Images`
+        : "Add Family and Kids Image";
     }
 
     if (isHomeSectionOne && form.id) return "Update Section";
@@ -3942,7 +4445,11 @@ export default function PageEdit() {
                   <Loader2 size={16} className="animate-spin" />
                 ) : (isWelcomeSection && !welcomeSlideForm.id) ||
                   (isSectionSix && !sectionSixForm.id) ||
-                  (isSectionTen && !sectionTenForm.id) ? (
+                  (isSectionSeven && !sectionSevenForm.id) ||
+                  (isSectionEight && !sectionEightForm.id) ||
+                  (isSectionNine && !sectionNineForm.id) ||
+                  (isSectionTen && !sectionTenForm.id) ||
+                  (isSectionTwelve && !sectionTwelveForm.id) ? (
                   <Plus size={16} />
                 ) : (
                   <Save size={16} />
