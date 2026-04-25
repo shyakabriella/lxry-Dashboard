@@ -62,6 +62,7 @@ const emptyWelcomeSlideForm = {
   imageFiles: [],
   imagePreview: "",
   imagePreviews: [],
+  slideDrafts: [],
   sort_order: 0,
   is_active: true,
 };
@@ -729,6 +730,43 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
+  const updateWelcomeSlideDraft = (index, field, value) => {
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = [...(prev.slideDrafts || [])];
+
+      slideDrafts[index] = {
+        ...slideDrafts[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeWelcomeSlideDraft = (index) => {
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = (prev.slideDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: slideDrafts.map((draft) => draft.file),
+        imageFile: slideDrafts[0]?.file || null,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
   const updateSectionThreeField = (field, value) => {
     setSectionThreeForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
@@ -765,13 +803,32 @@ export default function PageEdit() {
 
     if (!files.length) return;
 
-    setWelcomeSlideForm((prev) => ({
-      ...prev,
-      imageFile: files[0],
-      imageFiles: files,
-      imagePreview: URL.createObjectURL(files[0]),
-      imagePreviews: files.map((file) => URL.createObjectURL(file)),
-    }));
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          title: prev.title || "",
+          subtitle: prev.subtitle || "",
+          description: prev.description || "",
+          button_text: prev.button_text || "",
+          button_link: prev.button_link || "",
+          sort_order: Number(prev.sort_order || 0) + index,
+          is_active: prev.is_active,
+        };
+      });
+
+      return {
+        ...prev,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
@@ -877,12 +934,14 @@ export default function PageEdit() {
     }, 2500);
   };
 
-  const saveSingleWelcomeSlide = async ({ file, isUpdate }) => {
+  const saveSingleWelcomeSlide = async ({ file, isUpdate, draft = null }) => {
     const token = getToken();
 
     if (!token) {
       throw new Error("You are not logged in. Please login again.");
     }
+
+    const activeSlide = draft || welcomeSlideForm;
 
     const url = isUpdate
       ? `${API_BASE_URL}/admin/welcome-slides/${welcomeSlideForm.id}`
@@ -890,23 +949,23 @@ export default function PageEdit() {
 
     const formData = new FormData();
 
-    formData.append("title", welcomeSlideForm.title);
-    formData.append("subtitle", welcomeSlideForm.subtitle || "");
+    formData.append("title", activeSlide.title || "");
+    formData.append("subtitle", activeSlide.subtitle || "");
 
-    if (welcomeSlideForm.description) {
-      formData.append("description", welcomeSlideForm.description);
+    if (activeSlide.description) {
+      formData.append("description", activeSlide.description);
     }
 
-    if (welcomeSlideForm.button_text) {
-      formData.append("button_text", welcomeSlideForm.button_text);
+    if (activeSlide.button_text) {
+      formData.append("button_text", activeSlide.button_text);
     }
 
-    if (welcomeSlideForm.button_link) {
-      formData.append("button_link", welcomeSlideForm.button_link);
+    if (activeSlide.button_link) {
+      formData.append("button_link", activeSlide.button_link);
     }
 
-    formData.append("sort_order", welcomeSlideForm.sort_order || 0);
-    formData.append("is_active", welcomeSlideForm.is_active ? "1" : "0");
+    formData.append("sort_order", activeSlide.sort_order || 0);
+    formData.append("is_active", activeSlide.is_active ? "1" : "0");
 
     if (file) {
       formData.append("image", file);
@@ -956,22 +1015,37 @@ export default function PageEdit() {
       setSavedMessage(false);
 
       const isUpdate = Boolean(welcomeSlideForm.id);
-      const selectedFiles = welcomeSlideForm.imageFiles || [];
-
-      if (!isUpdate && !selectedFiles.length) {
-        throw new Error("Please upload at least one welcome image first.");
-      }
+      const slideDrafts = welcomeSlideForm.slideDrafts || [];
 
       if (isUpdate) {
+        if (!welcomeSlideForm.title.trim()) {
+          throw new Error("Please enter the slide title.");
+        }
+
         await saveSingleWelcomeSlide({
           file: welcomeSlideForm.imageFile,
           isUpdate: true,
         });
       } else {
-        for (const file of selectedFiles) {
+        if (!slideDrafts.length) {
+          throw new Error("Please upload at least one welcome image first.");
+        }
+
+        const missingTitleIndex = slideDrafts.findIndex(
+          (draft) => !draft.title?.trim()
+        );
+
+        if (missingTitleIndex !== -1) {
+          throw new Error(
+            `Please enter a title for welcome image #${missingTitleIndex + 1}.`
+          );
+        }
+
+        for (const draft of slideDrafts) {
           await saveSingleWelcomeSlide({
-            file,
+            file: draft.file,
             isUpdate: false,
+            draft,
           });
         }
       }
@@ -1701,6 +1775,8 @@ export default function PageEdit() {
   };
 
   const renderWelcomeSlideForm = () => {
+    const selectedDrafts = welcomeSlideForm.slideDrafts || [];
+
     return (
       <div className="space-y-5">
         {welcomeSlideForm.id ? (
@@ -1710,67 +1786,153 @@ export default function PageEdit() {
           </div>
         ) : (
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            Add welcome slides for the homepage hero area. You can select more
-            than one image at the same time.
+            Select one or more welcome images, then give every image its own
+            title and subtitle before saving.
           </div>
         )}
 
-        <InputField
-          label="Title"
-          value={welcomeSlideForm.title}
-          onChange={(value) => updateWelcomeSlideField("title", value)}
-          placeholder="Enter welcome title"
-        />
+        {welcomeSlideForm.id ? (
+          <>
+            <InputField
+              label="Title"
+              value={welcomeSlideForm.title}
+              onChange={(value) => updateWelcomeSlideField("title", value)}
+              placeholder="Enter welcome title"
+            />
 
-        <InputField
-          label="Subtitle"
-          value={welcomeSlideForm.subtitle}
-          onChange={(value) => updateWelcomeSlideField("subtitle", value)}
-          placeholder="Enter welcome subtitle"
-        />
+            <InputField
+              label="Subtitle"
+              value={welcomeSlideForm.subtitle}
+              onChange={(value) => updateWelcomeSlideField("subtitle", value)}
+              placeholder="Enter welcome subtitle"
+            />
 
-        <TextareaField
-          label="Description"
-          value={welcomeSlideForm.description}
-          onChange={(value) => updateWelcomeSlideField("description", value)}
-          placeholder="Enter welcome description"
-        />
+            <TextareaField
+              label="Description"
+              value={welcomeSlideForm.description}
+              onChange={(value) => updateWelcomeSlideField("description", value)}
+              placeholder="Enter welcome description"
+            />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <InputField
-            label="Button Text"
-            value={welcomeSlideForm.button_text}
-            onChange={(value) => updateWelcomeSlideField("button_text", value)}
-            placeholder="Example: Book Now"
-          />
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Button Text"
+                value={welcomeSlideForm.button_text}
+                onChange={(value) =>
+                  updateWelcomeSlideField("button_text", value)
+                }
+                placeholder="Example: Book Now"
+              />
 
-          <InputField
-            label="Button Link"
-            icon={Link2}
-            value={welcomeSlideForm.button_link}
-            onChange={(value) => updateWelcomeSlideField("button_link", value)}
-            placeholder="Example: /booking or #rooms"
-          />
-        </div>
+              <InputField
+                label="Button Link"
+                icon={Link2}
+                value={welcomeSlideForm.button_link}
+                onChange={(value) =>
+                  updateWelcomeSlideField("button_link", value)
+                }
+                placeholder="Example: /booking or #rooms"
+              />
+            </div>
 
-        <InputField
-          label="Sort Order"
-          type="number"
-          value={welcomeSlideForm.sort_order}
-          onChange={(value) => updateWelcomeSlideField("sort_order", value)}
-          placeholder="Example: 1"
-        />
+            <InputField
+              label="Sort Order"
+              type="number"
+              value={welcomeSlideForm.sort_order}
+              onChange={(value) => updateWelcomeSlideField("sort_order", value)}
+              placeholder="Example: 1"
+            />
 
-        <ActiveToggle
-          label="Active Slide"
-          checked={welcomeSlideForm.is_active}
-          onChange={(value) => updateWelcomeSlideField("is_active", value)}
-        />
+            <ActiveToggle
+              label="Active Slide"
+              checked={welcomeSlideForm.is_active}
+              onChange={(value) => updateWelcomeSlideField("is_active", value)}
+            />
+          </>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-bold text-slate-800">
+              Default content for new selected images
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Fill these first if many slides share the same button or text.
+              You can still edit each selected image below.
+            </p>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Default Title"
+                value={welcomeSlideForm.title}
+                onChange={(value) => updateWelcomeSlideField("title", value)}
+                placeholder="Example: Welcome to Luxury Garden Palace"
+              />
+
+              <InputField
+                label="Default Subtitle"
+                value={welcomeSlideForm.subtitle}
+                onChange={(value) => updateWelcomeSlideField("subtitle", value)}
+                placeholder="Example: Experience comfort and elegance"
+              />
+            </div>
+
+            <div className="mt-4">
+              <TextareaField
+                label="Default Description"
+                value={welcomeSlideForm.description}
+                onChange={(value) =>
+                  updateWelcomeSlideField("description", value)
+                }
+                placeholder="Optional description shared by selected slides"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Default Button Text"
+                value={welcomeSlideForm.button_text}
+                onChange={(value) =>
+                  updateWelcomeSlideField("button_text", value)
+                }
+                placeholder="Example: Book Now"
+              />
+
+              <InputField
+                label="Default Button Link"
+                icon={Link2}
+                value={welcomeSlideForm.button_link}
+                onChange={(value) =>
+                  updateWelcomeSlideField("button_link", value)
+                }
+                placeholder="Example: /booking or #rooms"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Start Sort Order"
+                type="number"
+                value={welcomeSlideForm.sort_order}
+                onChange={(value) =>
+                  updateWelcomeSlideField("sort_order", value)
+                }
+                placeholder="Example: 1"
+              />
+
+              <ActiveToggle
+                label="Active Slides"
+                checked={welcomeSlideForm.is_active}
+                onChange={(value) =>
+                  updateWelcomeSlideField("is_active", value)
+                }
+              />
+            </div>
+          </div>
+        )}
 
         <ImageUploadField
           multiple={!welcomeSlideForm.id}
           preview={welcomeSlideForm.imagePreview}
-          previews={welcomeSlideForm.imagePreviews}
+          previews={welcomeSlideForm.id ? [] : welcomeSlideForm.imagePreviews}
           onChange={handleWelcomeSlideImageChange}
           maxText={
             welcomeSlideForm.id
@@ -1778,6 +1940,119 @@ export default function PageEdit() {
               : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
           }
         />
+
+        {!welcomeSlideForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected images slide details
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Each image will be saved as its own welcome slide.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Welcome slide draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Welcome Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeWelcomeSlideDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Image Title"
+                      value={draft.title}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "title", value)
+                      }
+                      placeholder="Title for this image"
+                    />
+
+                    <InputField
+                      label="Image Subtitle"
+                      value={draft.subtitle}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "subtitle", value)
+                      }
+                      placeholder="Subtitle for this image"
+                    />
+                  </div>
+
+                  <TextareaField
+                    label="Image Description"
+                    value={draft.description}
+                    onChange={(value) =>
+                      updateWelcomeSlideDraft(index, "description", value)
+                    }
+                    placeholder="Optional description for this image"
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <InputField
+                      label="Button Text"
+                      value={draft.button_text}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "button_text", value)
+                      }
+                      placeholder="Example: Book Now"
+                    />
+
+                    <InputField
+                      label="Button Link"
+                      icon={Link2}
+                      value={draft.button_link}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "button_link", value)
+                      }
+                      placeholder="Example: /booking"
+                    />
+
+                    <InputField
+                      label="Sort Order"
+                      type="number"
+                      value={draft.sort_order}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "sort_order", value)
+                      }
+                      placeholder="1"
+                    />
+                  </div>
+
+                  <ActiveToggle
+                    label="Active Slide"
+                    checked={draft.is_active}
+                    onChange={(value) =>
+                      updateWelcomeSlideDraft(index, "is_active", value)
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -2566,7 +2841,7 @@ export default function PageEdit() {
 
     if (isWelcomeSection && welcomeSlideForm.id) return "Update Slide";
     if (isWelcomeSection) {
-      const count = welcomeSlideForm.imageFiles?.length || 0;
+      const count = welcomeSlideForm.slideDrafts?.length || 0;
       return count > 1 ? `Add ${count} Slides` : "Add Slide";
     }
 
