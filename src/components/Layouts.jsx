@@ -15,7 +15,11 @@ import {
   Image,
   Flower,
   Calendar,
+  Loader2,
 } from "lucide-react";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 const navItems = [
   {
@@ -69,9 +73,26 @@ const navItems = [
   },
 ];
 
+function getToken() {
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("authToken")
+  );
+}
+
+function clearAuthStorage() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
+  localStorage.removeItem("admin");
+}
+
 export default function Layouts() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openProperty, setOpenProperty] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,12 +103,30 @@ export default function Layouts() {
     }
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("authToken");
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
 
-    navigate("/login");
+      const token = getToken();
+
+      if (token) {
+        await fetch(`${API_BASE_URL}/logout`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    } finally {
+      clearAuthStorage();
+      setLoggingOut(false);
+
+      // Your Login page is on "/" based on your routes.
+      navigate("/", { replace: true });
+    }
   };
 
   return (
@@ -228,13 +267,18 @@ export default function Layouts() {
           <button
             type="button"
             onClick={handleLogout}
-            className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300"
+            disabled={loggingOut}
+            className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-70"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-400 transition-all duration-300 group-hover:bg-red-500/10 group-hover:text-red-300">
-              <LogOut size={18} />
+              {loggingOut ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <LogOut size={18} />
+              )}
             </span>
 
-            Sign Out
+            {loggingOut ? "Signing out..." : "Sign Out"}
           </button>
         </div>
       </aside>
