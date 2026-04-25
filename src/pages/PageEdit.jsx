@@ -78,8 +78,12 @@ const emptySectionThreeForm = {
   title_two: "",
   description: "",
   image: "",
+  image_url: "",
   imageFile: null,
+  imageFiles: [],
   imagePreview: "",
+  imagePreviews: [],
+  slideDrafts: [],
 };
 
 const emptySectionFourForm = {
@@ -89,12 +93,8 @@ const emptySectionFourForm = {
   title_line_two: "",
   description: "",
   image: "",
-  image_url: "",
   imageFile: null,
-  imageFiles: [],
   imagePreview: "",
-  imagePreviews: [],
-  slideDrafts: [],
   sort_order: 0,
   is_active: true,
 };
@@ -219,27 +219,23 @@ function formatHomeSectionOne(item) {
   };
 }
 
-function formatSectionFourSlide(item) {
+function formatSectionThreeSlide(item) {
   if (!item) return null;
 
   const imageValue = getImageValue(item);
 
   return {
     id: item.id || null,
-    eyebrow: item.eyebrow || "",
-    title_line_one: item.title_line_one || "",
-    title_line_two: item.title_line_two || "",
+    title_one: item.title_one || "",
+    title_two: item.title_two || "",
     description: item.description || "",
     image: imageValue,
     image_url: imageValue,
     imageFile: null,
     imagePreview: buildImageUrl(imageValue),
-    sort_order: item.sort_order ?? 0,
-    is_active: toBoolean(item.is_active ?? true),
     updatedAt: item.updated_at || item.updatedAt || "",
   };
 }
-
 function formatGenericStorageSection(item) {
   if (!item) return null;
 
@@ -336,8 +332,8 @@ export default function PageEdit() {
   const [sectionThreeForm, setSectionThreeForm] = useState(
     emptySectionThreeForm
   );
+  const [sectionThreeSlides, setSectionThreeSlides] = useState([]);
   const [sectionFourForm, setSectionFourForm] = useState(emptySectionFourForm);
-  const [sectionFourSlides, setSectionFourSlides] = useState([]);
   const [sectionFiveForm, setSectionFiveForm] = useState(emptySectionFiveForm);
 
   const [sectionSixForm, setSectionSixForm] = useState(emptySectionSixForm);
@@ -579,35 +575,22 @@ export default function PageEdit() {
         throw new Error(data?.message || "Failed to load Home Section Three.");
       }
 
-      const item = getItems(data)[0] || null;
+      const slides = getItems(data)
+        .map(formatSectionThreeSlide)
+        .filter(Boolean);
 
-      if (!item) {
-        setSectionThreeForm(emptySectionThreeForm);
-        setSavedData(null);
-        return;
-      }
-
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title_one: item.title_one || "",
-        title_two: item.title_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-      };
-
+      setSectionThreeSlides(slides);
+      setSavedData(slides);
       setSectionThreeForm(emptySectionThreeForm);
-      setSavedData(formatted);
     } catch (err) {
+      setSectionThreeSlides([]);
+      setSavedData([]);
+      setSectionThreeForm(emptySectionThreeForm);
       setError(err.message || "Something went wrong while loading data.");
     } finally {
       setLoading(false);
     }
   };
-
   const fetchSectionFour = async () => {
     try {
       setLoading(true);
@@ -626,18 +609,32 @@ export default function PageEdit() {
         throw new Error(data?.message || "Failed to load Home Section Four.");
       }
 
-      const slides = getItems(data)
-        .map(formatSectionFourSlide)
-        .filter(Boolean)
-        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+      const item = getItems(data)[0] || null;
 
-      setSectionFourSlides(slides);
-      setSavedData(slides);
+      if (!item) {
+        setSectionFourForm(emptySectionFourForm);
+        setSavedData(null);
+        return;
+      }
+
+      const imageValue = getImageValue(item);
+
+      const formatted = {
+        id: item.id,
+        eyebrow: item.eyebrow || "",
+        title_line_one: item.title_line_one || "",
+        title_line_two: item.title_line_two || "",
+        description: item.description || "",
+        image: imageValue,
+        imageFile: null,
+        imagePreview: buildImageUrl(imageValue),
+        sort_order: item.sort_order ?? 0,
+        is_active: toBoolean(item.is_active),
+      };
+
       setSectionFourForm(emptySectionFourForm);
+      setSavedData(formatted);
     } catch (err) {
-      setSectionFourSlides([]);
-      setSavedData([]);
-      setSectionFourForm(emptySectionFourForm);
       setError(err.message || "Something went wrong while loading data.");
     } finally {
       setLoading(false);
@@ -872,13 +869,8 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
-  const updateSectionFourField = (field, value) => {
-    setSectionFourForm((prev) => ({ ...prev, [field]: value }));
-    setSavedMessage(false);
-  };
-
-  const updateSectionFourDraft = (index, field, value) => {
-    setSectionFourForm((prev) => {
+  const updateSectionThreeDraft = (index, field, value) => {
+    setSectionThreeForm((prev) => {
       const slideDrafts = [...(prev.slideDrafts || [])];
 
       slideDrafts[index] = {
@@ -895,8 +887,8 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
-  const removeSectionFourDraft = (index) => {
-    setSectionFourForm((prev) => {
+  const removeSectionThreeDraft = (index) => {
+    setSectionThreeForm((prev) => {
       const slideDrafts = (prev.slideDrafts || []).filter(
         (_, itemIndex) => itemIndex !== index
       );
@@ -911,6 +903,11 @@ export default function PageEdit() {
       };
     });
 
+    setSavedMessage(false);
+  };
+
+  const updateSectionFourField = (field, value) => {
+    setSectionFourForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
@@ -971,28 +968,14 @@ export default function PageEdit() {
   };
 
   const handleSectionThreeImageChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setSectionThreeForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
-
-    setSavedMessage(false);
-  };
-
-  const handleSectionFourImageChange = (e) => {
     const files = Array.from(e.target.files || []);
 
     if (!files.length) return;
 
-    if (sectionFourForm.id) {
+    if (sectionThreeForm.id) {
       const file = files[0];
 
-      setSectionFourForm((prev) => ({
+      setSectionThreeForm((prev) => ({
         ...prev,
         imageFile: file,
         imagePreview: URL.createObjectURL(file),
@@ -1002,20 +985,16 @@ export default function PageEdit() {
       return;
     }
 
-    setSectionFourForm((prev) => {
-      const nextSortStart = sectionFourSlides.length + 1;
-      const slideDrafts = files.map((file, index) => {
+    setSectionThreeForm((prev) => {
+      const slideDrafts = files.map((file) => {
         const preview = URL.createObjectURL(file);
 
         return {
           file,
           preview,
-          eyebrow: "For Every Event",
-          title_line_one: "",
-          title_line_two: "",
+          title_one: "",
+          title_two: "",
           description: "",
-          sort_order: nextSortStart + index,
-          is_active: true,
         };
       });
 
@@ -1028,6 +1007,19 @@ export default function PageEdit() {
         slideDrafts,
       };
     });
+
+    setSavedMessage(false);
+  };
+  const handleSectionFourImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setSectionFourForm((prev) => ({
+      ...prev,
+      imageFile: file,
+      imagePreview: URL.createObjectURL(file),
+    }));
 
     setSavedMessage(false);
   };
@@ -1332,106 +1324,23 @@ export default function PageEdit() {
     }
   };
 
-  const handleSectionThreeSave = async () => {
-    try {
-      setSaving(true);
-      setError("");
-      setSavedMessage(false);
-
-      const token = getToken();
-
-      if (!token) {
-        throw new Error("You are not logged in. Please login again.");
-      }
-
-      const formData = new FormData();
-
-      formData.append("title_one", sectionThreeForm.title_one);
-      formData.append("title_two", sectionThreeForm.title_two);
-
-      if (sectionThreeForm.description) {
-        formData.append("description", sectionThreeForm.description);
-      }
-
-      if (sectionThreeForm.imageFile) {
-        formData.append("image", sectionThreeForm.imageFile);
-      }
-
-      const isUpdate = Boolean(sectionThreeForm.id);
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/home-section-threes/${sectionThreeForm.id}`
-        : `${API_BASE_URL}/home-section-threes`;
-
-      if (isUpdate) {
-        formData.append("_method", "PUT");
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const message = getErrorMessage(
-          data,
-          ["title_one", "title_two", "description", "image"],
-          "Failed to save Home Section Three."
-        );
-
-        throw new Error(message);
-      }
-
-      const item = data?.data || data;
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title_one: item.title_one || "",
-        title_two: item.title_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setSectionThreeForm(emptySectionThreeForm);
-      setSavedData(formatted);
-      showSavedSuccess();
-    } catch (err) {
-      setError(err.message || "Something went wrong while saving.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveSingleSectionFourSlide = async ({ file, isUpdate, draft = null }) => {
+  const saveSingleSectionThreeSlide = async ({ file, isUpdate, draft = null }) => {
     const token = getToken();
 
     if (!token) {
       throw new Error("You are not logged in. Please login again.");
     }
 
-    const activeSlide = draft || sectionFourForm;
+    const activeSlide = draft || sectionThreeForm;
     const url = isUpdate
-      ? `${API_BASE_URL}/home-section-fours/${sectionFourForm.id}`
-      : `${API_BASE_URL}/home-section-fours`;
+      ? `${API_BASE_URL}/home-section-threes/${sectionThreeForm.id}`
+      : `${API_BASE_URL}/home-section-threes`;
 
     const formData = new FormData();
 
-    formData.append("eyebrow", activeSlide.eyebrow || "");
-    formData.append("title_line_one", activeSlide.title_line_one || "");
-    formData.append("title_line_two", activeSlide.title_line_two || "");
+    formData.append("title_one", activeSlide.title_one || "");
+    formData.append("title_two", activeSlide.title_two || "");
     formData.append("description", activeSlide.description || "");
-    formData.append("sort_order", activeSlide.sort_order || 0);
-    formData.append("is_active", activeSlide.is_active ? "1" : "0");
 
     if (file) {
       formData.append("image", file);
@@ -1455,16 +1364,8 @@ export default function PageEdit() {
     if (!response.ok) {
       const message = getErrorMessage(
         data,
-        [
-          "eyebrow",
-          "title_line_one",
-          "title_line_two",
-          "description",
-          "image",
-          "sort_order",
-          "is_active",
-        ],
-        "Failed to save Home Section Four slide."
+        ["title_one", "title_two", "description", "image"],
+        "Failed to save Home Section Three slide."
       );
 
       throw new Error(message);
@@ -1473,31 +1374,31 @@ export default function PageEdit() {
     return data;
   };
 
-  const handleSectionFourSave = async () => {
+  const handleSectionThreeSave = async () => {
     try {
       setSaving(true);
       setError("");
       setSavedMessage(false);
 
-      const isUpdate = Boolean(sectionFourForm.id);
-      const slideDrafts = sectionFourForm.slideDrafts || [];
+      const isUpdate = Boolean(sectionThreeForm.id);
+      const slideDrafts = sectionThreeForm.slideDrafts || [];
 
       if (isUpdate) {
-        if (!sectionFourForm.title_line_one.trim()) {
+        if (!sectionThreeForm.title_one.trim()) {
           throw new Error("Please enter the slide title line one.");
         }
 
-        await saveSingleSectionFourSlide({
-          file: sectionFourForm.imageFile,
+        await saveSingleSectionThreeSlide({
+          file: sectionThreeForm.imageFile,
           isUpdate: true,
         });
       } else {
         if (!slideDrafts.length) {
-          throw new Error("Please upload at least one section image first.");
+          throw new Error("Please upload at least one Home Section Three image first.");
         }
 
         const missingTitleIndex = slideDrafts.findIndex(
-          (draft) => !draft.title_line_one?.trim()
+          (draft) => !draft.title_one?.trim()
         );
 
         if (missingTitleIndex !== -1) {
@@ -1507,7 +1408,7 @@ export default function PageEdit() {
         }
 
         for (const draft of slideDrafts) {
-          await saveSingleSectionFourSlide({
+          await saveSingleSectionThreeSlide({
             file: draft.file,
             isUpdate: false,
             draft,
@@ -1515,11 +1416,108 @@ export default function PageEdit() {
         }
       }
 
-      setSectionFourForm(emptySectionFourForm);
-      await fetchSectionFour();
+      setSectionThreeForm(emptySectionThreeForm);
+      await fetchSectionThree();
       showSavedSuccess();
     } catch (err) {
-      setError(err.message || "Something went wrong while saving Home Section Four.");
+      setError(err.message || "Something went wrong while saving Home Section Three.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleSectionFourSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const formData = new FormData();
+
+      if (sectionFourForm.eyebrow) {
+        formData.append("eyebrow", sectionFourForm.eyebrow);
+      }
+
+      formData.append("title_line_one", sectionFourForm.title_line_one);
+      formData.append("title_line_two", sectionFourForm.title_line_two);
+
+      if (sectionFourForm.description) {
+        formData.append("description", sectionFourForm.description);
+      }
+
+      formData.append("sort_order", sectionFourForm.sort_order || 0);
+      formData.append("is_active", sectionFourForm.is_active ? "1" : "0");
+
+      if (sectionFourForm.imageFile) {
+        formData.append("image", sectionFourForm.imageFile);
+      }
+
+      const isUpdate = Boolean(sectionFourForm.id);
+
+      const url = isUpdate
+        ? `${API_BASE_URL}/home-section-fours/${sectionFourForm.id}`
+        : `${API_BASE_URL}/home-section-fours`;
+
+      if (isUpdate) {
+        formData.append("_method", "PUT");
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = getErrorMessage(
+          data,
+          [
+            "eyebrow",
+            "title_line_one",
+            "title_line_two",
+            "description",
+            "image",
+            "sort_order",
+            "is_active",
+          ],
+          "Failed to save Home Section Four."
+        );
+
+        throw new Error(message);
+      }
+
+      const item = data?.data || data;
+      const imageValue = getImageValue(item);
+
+      const formatted = {
+        id: item.id,
+        eyebrow: item.eyebrow || "",
+        title_line_one: item.title_line_one || "",
+        title_line_two: item.title_line_two || "",
+        description: item.description || "",
+        image: imageValue,
+        imageFile: null,
+        imagePreview: buildImageUrl(imageValue),
+        sort_order: item.sort_order ?? 0,
+        is_active: toBoolean(item.is_active),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setSectionFourForm(emptySectionFourForm);
+      setSavedData(formatted);
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving.");
     } finally {
       setSaving(false);
     }
@@ -2037,18 +2035,16 @@ export default function PageEdit() {
         throw new Error(data?.message || "Failed to delete section content.");
       }
 
-      if (sectionKey === "section-three") setSectionThreeForm(emptySectionThreeForm);
+      if (sectionKey === "section-three") {
+        setSectionThreeForm(emptySectionThreeForm);
+        await fetchSectionThree();
+      } else {
+        if (sectionKey === "section-four") setSectionFourForm(emptySectionFourForm);
+        if (sectionKey === "section-five") setSectionFiveForm(emptySectionFiveForm);
 
-      if (sectionKey === "section-four") {
-        setSectionFourForm(emptySectionFourForm);
-        await fetchSectionFour();
-        showSavedSuccess();
-        return;
+        setSavedData(null);
       }
 
-      if (sectionKey === "section-five") setSectionFiveForm(emptySectionFiveForm);
-
-      setSavedData(null);
       showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while deleting section content.");
@@ -2392,127 +2388,67 @@ export default function PageEdit() {
   };
 
   const renderSectionThreeForm = () => {
-    return (
-      <div className="space-y-5">
-        <InputField
-          label="Title One"
-          value={sectionThreeForm.title_one}
-          onChange={(value) => updateSectionThreeField("title_one", value)}
-          placeholder="Enter first title"
-        />
-
-        <InputField
-          label="Title Two"
-          value={sectionThreeForm.title_two}
-          onChange={(value) => updateSectionThreeField("title_two", value)}
-          placeholder="Enter second title"
-        />
-
-        <TextareaField
-          label="Description"
-          value={sectionThreeForm.description}
-          onChange={(value) => updateSectionThreeField("description", value)}
-          placeholder="Enter section description"
-        />
-
-        <ImageUploadField
-          preview={sectionThreeForm.imagePreview}
-          onChange={handleSectionThreeImageChange}
-          maxText="JPG, JPEG, PNG, WEBP. Max 2MB."
-        />
-      </div>
-    );
-  };
-
-  const renderSectionFourForm = () => {
-    const selectedDrafts = sectionFourForm.slideDrafts || [];
+    const selectedDrafts = sectionThreeForm.slideDrafts || [];
 
     return (
       <div className="space-y-5">
-        {sectionFourForm.id ? (
+        {sectionThreeForm.id ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Editing event slide #{sectionFourForm.id}. Click “Clear Form” to add new slides instead.
+            Editing Home Section Three slide #{sectionThreeForm.id}. Click “Clear Form” to add new slides instead.
           </div>
         ) : (
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            Upload one or more images. Each image will have its own eyebrow, title, description, and order.
+            Upload one or more images. Each image will have its own title and description.
           </div>
         )}
 
-        {sectionFourForm.id && (
+        {sectionThreeForm.id && (
           <>
-            <InputField
-              label="Eyebrow"
-              value={sectionFourForm.eyebrow}
-              onChange={(value) => updateSectionFourField("eyebrow", value)}
-              placeholder="Example: For Every Event"
-            />
-
             <div className="grid gap-4 md:grid-cols-2">
               <InputField
                 label="Title Line One"
-                value={sectionFourForm.title_line_one}
-                onChange={(value) =>
-                  updateSectionFourField("title_line_one", value)
-                }
+                value={sectionThreeForm.title_one}
+                onChange={(value) => updateSectionThreeField("title_one", value)}
                 placeholder="Example: Unforgettable"
               />
 
               <InputField
                 label="Title Line Two"
-                value={sectionFourForm.title_line_two}
-                onChange={(value) =>
-                  updateSectionFourField("title_line_two", value)
-                }
+                value={sectionThreeForm.title_two}
+                onChange={(value) => updateSectionThreeField("title_two", value)}
                 placeholder="Example: Weddings"
               />
             </div>
 
             <TextareaField
               label="Description"
-              value={sectionFourForm.description}
-              onChange={(value) => updateSectionFourField("description", value)}
+              value={sectionThreeForm.description}
+              onChange={(value) => updateSectionThreeField("description", value)}
               placeholder="Enter slide description"
             />
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <InputField
-                label="Sort Order"
-                type="number"
-                value={sectionFourForm.sort_order}
-                onChange={(value) => updateSectionFourField("sort_order", value)}
-                placeholder="0"
-              />
-
-              <ActiveToggle
-                label="Active Slide"
-                checked={sectionFourForm.is_active}
-                onChange={(value) => updateSectionFourField("is_active", value)}
-              />
-            </div>
           </>
         )}
 
         <ImageUploadField
-          multiple={!sectionFourForm.id}
-          preview={sectionFourForm.imagePreview}
-          previews={sectionFourForm.id ? [] : sectionFourForm.imagePreviews}
-          onChange={handleSectionFourImageChange}
+          multiple={!sectionThreeForm.id}
+          preview={sectionThreeForm.imagePreview}
+          previews={sectionThreeForm.id ? [] : sectionThreeForm.imagePreviews}
+          onChange={handleSectionThreeImageChange}
           maxText={
-            sectionFourForm.id
+            sectionThreeForm.id
               ? "JPG, JPEG, PNG, WEBP."
               : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
           }
         />
 
-        {!sectionFourForm.id && selectedDrafts.length > 0 && (
+        {!sectionThreeForm.id && selectedDrafts.length > 0 && (
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Selected event images
+                Selected Home Section Three images
               </h3>
               <p className="mt-1 text-xs text-slate-500">
-                Add title and description for each image before saving.
+                Add a title and description for each image before saving.
               </p>
             </div>
 
@@ -2524,7 +2460,7 @@ export default function PageEdit() {
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
                   <img
                     src={draft.preview}
-                    alt={`Event slide draft ${index + 1}`}
+                    alt={`Home Section Three draft ${index + 1}`}
                     className="h-36 w-full object-cover"
                   />
                 </div>
@@ -2532,12 +2468,12 @@ export default function PageEdit() {
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm font-bold text-slate-900">
-                      Event Image #{index + 1}
+                      Section Three Image #{index + 1}
                     </p>
 
                     <button
                       type="button"
-                      onClick={() => removeSectionFourDraft(index)}
+                      onClick={() => removeSectionThreeDraft(index)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
                     >
                       <Trash2 size={13} />
@@ -2545,30 +2481,21 @@ export default function PageEdit() {
                     </button>
                   </div>
 
-                  <InputField
-                    label="Eyebrow"
-                    value={draft.eyebrow}
-                    onChange={(value) =>
-                      updateSectionFourDraft(index, "eyebrow", value)
-                    }
-                    placeholder="Example: For Every Event"
-                  />
-
                   <div className="grid gap-4 md:grid-cols-2">
                     <InputField
                       label="Title Line One"
-                      value={draft.title_line_one}
+                      value={draft.title_one}
                       onChange={(value) =>
-                        updateSectionFourDraft(index, "title_line_one", value)
+                        updateSectionThreeDraft(index, "title_one", value)
                       }
                       placeholder="Example: Unforgettable"
                     />
 
                     <InputField
                       label="Title Line Two"
-                      value={draft.title_line_two}
+                      value={draft.title_two}
                       onChange={(value) =>
-                        updateSectionFourDraft(index, "title_line_two", value)
+                        updateSectionThreeDraft(index, "title_two", value)
                       }
                       placeholder="Example: Weddings"
                     />
@@ -2578,35 +2505,72 @@ export default function PageEdit() {
                     label="Description"
                     value={draft.description}
                     onChange={(value) =>
-                      updateSectionFourDraft(index, "description", value)
+                      updateSectionThreeDraft(index, "description", value)
                     }
-                    placeholder="Enter slide description"
+                    placeholder="Enter image description"
                   />
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <InputField
-                      label="Sort Order"
-                      type="number"
-                      value={draft.sort_order}
-                      onChange={(value) =>
-                        updateSectionFourDraft(index, "sort_order", value)
-                      }
-                      placeholder="1"
-                    />
-
-                    <ActiveToggle
-                      label="Active Slide"
-                      checked={draft.is_active}
-                      onChange={(value) =>
-                        updateSectionFourDraft(index, "is_active", value)
-                      }
-                    />
-                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
+      </div>
+    );
+  };
+  const renderSectionFourForm = () => {
+    return (
+      <div className="space-y-5">
+        <InputField
+          label="Eyebrow"
+          value={sectionFourForm.eyebrow}
+          onChange={(value) => updateSectionFourField("eyebrow", value)}
+          placeholder="Example: Luxury Experience"
+        />
+
+        <InputField
+          label="Title Line One"
+          value={sectionFourForm.title_line_one}
+          onChange={(value) =>
+            updateSectionFourField("title_line_one", value)
+          }
+          placeholder="Enter first title line"
+        />
+
+        <InputField
+          label="Title Line Two"
+          value={sectionFourForm.title_line_two}
+          onChange={(value) =>
+            updateSectionFourField("title_line_two", value)
+          }
+          placeholder="Enter second title line"
+        />
+
+        <TextareaField
+          label="Description"
+          value={sectionFourForm.description}
+          onChange={(value) => updateSectionFourField("description", value)}
+          placeholder="Enter slide description"
+        />
+
+        <InputField
+          label="Sort Order"
+          type="number"
+          value={sectionFourForm.sort_order}
+          onChange={(value) => updateSectionFourField("sort_order", value)}
+          placeholder="0"
+        />
+
+        <ActiveToggle
+          label="Active Slide"
+          checked={sectionFourForm.is_active}
+          onChange={(value) => updateSectionFourField("is_active", value)}
+        />
+
+        <ImageUploadField
+          preview={sectionFourForm.imagePreview}
+          onChange={handleSectionFourImageChange}
+          maxText="JPG, JPEG, PNG, WEBP. Max 4MB."
+        />
       </div>
     );
   };
@@ -2920,56 +2884,23 @@ export default function PageEdit() {
   };
 
   const renderSectionThreePreview = () => {
-    if (!savedData) {
-      return renderEmptyPreview("No saved section three content yet");
-    }
-
-    return (
-      <PreviewCard image={savedData.imagePreview}>
-        <SectionBadge>{currentSection.title}</SectionBadge>
-
-        <h3 className="text-2xl font-bold leading-tight text-slate-900">
-          {savedData.title_one || "No title one saved"}
-        </h3>
-
-        <h4 className="text-lg font-semibold leading-tight text-amber-600">
-          {savedData.title_two || "No title two saved"}
-        </h4>
-
-        {savedData.description && (
-          <p className="text-sm leading-7 text-slate-600">
-            {savedData.description}
-          </p>
-        )}
-
-        <PreviewActions
-          onEdit={() => handleSingleSectionEdit("section-three", savedData)}
-          onDelete={() => handleSingleSectionDelete("section-three", savedData.id)}
-        />
-
-        {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
-      </PreviewCard>
-    );
-  };
-
-  const renderSectionFourPreview = () => {
-    if (!sectionFourSlides.length) {
-      return renderEmptyPreview("No event slides saved yet");
+    if (!sectionThreeSlides.length) {
+      return renderEmptyPreview("No Home Section Three slides saved yet");
     }
 
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
           <p className="text-sm font-semibold text-amber-800">
-            Saved Event Slides: {sectionFourSlides.length}
+            Saved Home Section Three Slides: {sectionThreeSlides.length}
           </p>
           <p className="mt-1 text-xs text-amber-700">
-            Click edit to update a slide, or delete to remove it.
+            Click edit to update one image, or delete to remove it.
           </p>
         </div>
 
         <div className="grid gap-4">
-          {sectionFourSlides.map((slide) => (
+          {sectionThreeSlides.map((slide) => (
             <div
               key={slide.id}
               className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
@@ -2977,7 +2908,7 @@ export default function PageEdit() {
               <div className="aspect-video bg-slate-100">
                 <img
                   src={slide.imagePreview}
-                  alt={slide.title_line_one || `Event slide ${slide.id}`}
+                  alt={slide.title_one || `Home Section Three slide ${slide.id}`}
                   className="h-full w-full object-cover"
                   onError={(e) => {
                     e.currentTarget.src =
@@ -2987,24 +2918,17 @@ export default function PageEdit() {
               </div>
 
               <div className="space-y-3 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <SectionBadge>Event Slide #{slide.id}</SectionBadge>
-                  <StatusBadge active={toBoolean(slide.is_active)} />
-
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                    Sort: {slide.sort_order ?? 0}
-                  </span>
-                </div>
-
-                {slide.eyebrow && <EyebrowText>{slide.eyebrow}</EyebrowText>}
+                <SectionBadge>Section Three #{slide.id}</SectionBadge>
 
                 <h3 className="text-2xl font-bold leading-tight text-slate-900">
-                  {slide.title_line_one || "No title line one saved"}
+                  {slide.title_one || "No title line one saved"}
                 </h3>
 
-                <h4 className="text-lg font-semibold leading-tight text-amber-600">
-                  {slide.title_line_two || "No title line two saved"}
-                </h4>
+                {slide.title_two && (
+                  <h4 className="text-lg font-semibold leading-tight text-amber-600">
+                    {slide.title_two}
+                  </h4>
+                )}
 
                 {slide.description && (
                   <p className="text-sm leading-7 text-slate-600">
@@ -3013,8 +2937,8 @@ export default function PageEdit() {
                 )}
 
                 <PreviewActions
-                  onEdit={() => handleSingleSectionEdit("section-four", slide)}
-                  onDelete={() => handleSingleSectionDelete("section-four", slide.id)}
+                  onEdit={() => handleSingleSectionEdit("section-three", slide)}
+                  onDelete={() => handleSingleSectionDelete("section-three", slide.id)}
                 />
 
                 {slide.updatedAt && <UpdatedAt date={slide.updatedAt} />}
@@ -3023,6 +2947,50 @@ export default function PageEdit() {
           ))}
         </div>
       </div>
+    );
+  };
+  const renderSectionFourPreview = () => {
+    if (!savedData) {
+      return renderEmptyPreview("No saved section four slide yet");
+    }
+
+    return (
+      <PreviewCard image={savedData.imagePreview}>
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionBadge>{currentSection.title}</SectionBadge>
+
+          <StatusBadge active={savedData.is_active} />
+
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+            Sort: {savedData.sort_order ?? 0}
+          </span>
+        </div>
+
+        {savedData.eyebrow && (
+          <EyebrowText>{savedData.eyebrow}</EyebrowText>
+        )}
+
+        <h3 className="text-2xl font-bold leading-tight text-slate-900">
+          {savedData.title_line_one || "No title line one saved"}
+        </h3>
+
+        <h4 className="text-lg font-semibold leading-tight text-amber-600">
+          {savedData.title_line_two || "No title line two saved"}
+        </h4>
+
+        {savedData.description && (
+          <p className="text-sm leading-7 text-slate-600">
+            {savedData.description}
+          </p>
+        )}
+
+        <PreviewActions
+          onEdit={() => handleSingleSectionEdit("section-four", savedData)}
+          onDelete={() => handleSingleSectionDelete("section-four", savedData.id)}
+        />
+
+        {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
+      </PreviewCard>
     );
   };
 
