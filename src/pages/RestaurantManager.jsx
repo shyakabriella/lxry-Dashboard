@@ -90,7 +90,12 @@ function getItems(data) {
 }
 
 function money(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
+  const amount = Number(value || 0);
+
+  return `RWF ${amount.toLocaleString("en-RW", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
 }
 
 export default function RestaurantManager() {
@@ -207,7 +212,6 @@ export default function RestaurantManager() {
       if (category?.id) {
         params.append("category_id", category.id);
       }
-
 
       const response = await fetch(
         `${API_BASE_URL}/restaurant-menu-items?${params.toString()}`,
@@ -510,11 +514,6 @@ export default function RestaurantManager() {
         formData.append("_method", "PUT");
       }
 
-      /**
-       * Your old routes used POST for update:
-       * Route::post('restaurant-menu-items/{id}', update)
-       * So this keeps update compatible with your existing Laravel route.
-       */
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -969,12 +968,12 @@ export default function RestaurantManager() {
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="1"
                       value={itemForm.price}
                       onChange={(e) =>
                         handleItemFieldChange("price", e.target.value)
                       }
-                      placeholder="Example: 15"
+                      placeholder="Example: 15000"
                       className="form-input"
                     />
                   </Field>
