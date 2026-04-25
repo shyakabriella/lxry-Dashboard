@@ -40,10 +40,15 @@ const homeSections = [
 ];
 
 const emptyGenericForm = {
+  id: null,
   title: "",
   subtitle: "",
   description: "",
+  image: "",
+  image_url: "",
   imageUrl: "",
+  imageFile: null,
+  imagePreview: "",
   buttonText: "",
   buttonLink: "",
   isActive: true,
@@ -84,8 +89,12 @@ const emptySectionFourForm = {
   title_line_two: "",
   description: "",
   image: "",
+  image_url: "",
   imageFile: null,
+  imageFiles: [],
   imagePreview: "",
+  imagePreviews: [],
+  slideDrafts: [],
   sort_order: 0,
   is_active: true,
 };
@@ -190,6 +199,58 @@ function getImageValue(item) {
   return item?.image || item?.image_url || item?.image_path || "";
 }
 
+function formatHomeSectionOne(item) {
+  if (!item) return null;
+
+  const imageValue = getImageValue(item);
+
+  return {
+    id: item.id || null,
+    title: item.title || "",
+    subtitle: item.subtitle || "",
+    description: item.description || "",
+    image: imageValue,
+    image_url: imageValue,
+    imageUrl: buildImageUrl(imageValue),
+    imageFile: null,
+    imagePreview: buildImageUrl(imageValue),
+    isActive: toBoolean(item.is_active ?? item.isActive ?? true),
+    updatedAt: item.updated_at || item.updatedAt || "",
+  };
+}
+
+function formatSectionFourSlide(item) {
+  if (!item) return null;
+
+  const imageValue = getImageValue(item);
+
+  return {
+    id: item.id || null,
+    eyebrow: item.eyebrow || "",
+    title_line_one: item.title_line_one || "",
+    title_line_two: item.title_line_two || "",
+    description: item.description || "",
+    image: imageValue,
+    image_url: imageValue,
+    imageFile: null,
+    imagePreview: buildImageUrl(imageValue),
+    sort_order: item.sort_order ?? 0,
+    is_active: toBoolean(item.is_active ?? true),
+    updatedAt: item.updated_at || item.updatedAt || "",
+  };
+}
+
+function formatGenericStorageSection(item) {
+  if (!item) return null;
+
+  return {
+    ...emptyGenericForm,
+    ...item,
+    imagePreview: item.imagePreview || item.imageUrl || "",
+    isActive: item.isActive ?? true,
+  };
+}
+
 function getPublicPath(sectionName) {
   const paths = {
     fitness: "section7/fitness",
@@ -238,6 +299,8 @@ export default function PageEdit() {
   }, [sectionSlug]);
 
   const isWelcomeSection = sectionSlug === "welcome-section";
+  const isHomeSectionOne = sectionSlug === "home-section-one";
+  const isHomeSectionTwo = sectionSlug === "home-section-two";
   const isSectionThree = sectionSlug === "home-section-three";
   const isSectionFour = sectionSlug === "home-section-four";
   const isSectionFive = sectionSlug === "home-section-five";
@@ -251,6 +314,7 @@ export default function PageEdit() {
 
   const isLaravelApiSection =
     isWelcomeSection ||
+    isHomeSectionOne ||
     isSectionThree ||
     isSectionFour ||
     isSectionFive ||
@@ -273,6 +337,7 @@ export default function PageEdit() {
     emptySectionThreeForm
   );
   const [sectionFourForm, setSectionFourForm] = useState(emptySectionFourForm);
+  const [sectionFourSlides, setSectionFourSlides] = useState([]);
   const [sectionFiveForm, setSectionFiveForm] = useState(emptySectionFiveForm);
 
   const [sectionSixForm, setSectionSixForm] = useState(emptySectionSixForm);
@@ -305,6 +370,11 @@ export default function PageEdit() {
 
     if (isWelcomeSection) {
       fetchWelcomeSlides();
+      return;
+    }
+
+    if (isHomeSectionOne) {
+      fetchHomeSectionOne();
       return;
     }
 
@@ -362,8 +432,10 @@ export default function PageEdit() {
     const existingData = allSections[currentSection.slug] || null;
 
     if (existingData) {
-      setForm(existingData);
-      setSavedData(existingData);
+      const formattedGenericData = formatGenericStorageSection(existingData);
+
+      setForm(emptyGenericForm);
+      setSavedData(formattedGenericData);
     } else {
       setForm(emptyGenericForm);
       setSavedData(null);
@@ -371,6 +443,8 @@ export default function PageEdit() {
   }, [
     currentSection,
     isWelcomeSection,
+    isHomeSectionOne,
+    isHomeSectionTwo,
     isSectionThree,
     isSectionFour,
     isSectionFive,
@@ -401,6 +475,46 @@ export default function PageEdit() {
     if (sectionName === "family-kids") return sectionTwelveForm;
 
     return emptyUrlContentForm;
+  };
+
+  const showSavedSuccess = () => {
+    setSavedMessage(true);
+
+    setTimeout(() => {
+      setSavedMessage(false);
+    }, 2500);
+  };
+
+  const fetchHomeSectionOne = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_BASE_URL}/home-section-one`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load Home Section One.");
+      }
+
+      const item = data?.data || null;
+      const formatted = formatHomeSectionOne(item);
+
+      setSavedData(formatted);
+      setForm(emptyGenericForm);
+    } catch (err) {
+      setSavedData(null);
+      setForm(emptyGenericForm);
+      setError(err.message || "Something went wrong while loading Home Section One.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchWelcomeSlides = async () => {
@@ -485,7 +599,7 @@ export default function PageEdit() {
         imagePreview: buildImageUrl(imageValue),
       };
 
-      setSectionThreeForm(formatted);
+      setSectionThreeForm(emptySectionThreeForm);
       setSavedData(formatted);
     } catch (err) {
       setError(err.message || "Something went wrong while loading data.");
@@ -512,32 +626,18 @@ export default function PageEdit() {
         throw new Error(data?.message || "Failed to load Home Section Four.");
       }
 
-      const item = getItems(data)[0] || null;
+      const slides = getItems(data)
+        .map(formatSectionFourSlide)
+        .filter(Boolean)
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
-      if (!item) {
-        setSectionFourForm(emptySectionFourForm);
-        setSavedData(null);
-        return;
-      }
-
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        eyebrow: item.eyebrow || "",
-        title_line_one: item.title_line_one || "",
-        title_line_two: item.title_line_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        sort_order: item.sort_order ?? 0,
-        is_active: toBoolean(item.is_active),
-      };
-
-      setSectionFourForm(formatted);
-      setSavedData(formatted);
+      setSectionFourSlides(slides);
+      setSavedData(slides);
+      setSectionFourForm(emptySectionFourForm);
     } catch (err) {
+      setSectionFourSlides([]);
+      setSavedData([]);
+      setSectionFourForm(emptySectionFourForm);
       setError(err.message || "Something went wrong while loading data.");
     } finally {
       setLoading(false);
@@ -585,7 +685,7 @@ export default function PageEdit() {
         is_active: toBoolean(item.is_active),
       };
 
-      setSectionFiveForm(formatted);
+      setSectionFiveForm(emptySectionFiveForm);
       setSavedData(formatted);
     } catch (err) {
       setError(err.message || "Something went wrong while loading data.");
@@ -684,7 +784,7 @@ export default function PageEdit() {
         updatedAt: item.updated_at || item.updatedAt || "",
       };
 
-      setUrlContentFormBySection(sectionName, formatted);
+      setUrlContentFormBySection(sectionName, emptyUrlContentForm);
       setSavedData(formatted);
     } catch (err) {
       setError(
@@ -777,6 +877,43 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
+  const updateSectionFourDraft = (index, field, value) => {
+    setSectionFourForm((prev) => {
+      const slideDrafts = [...(prev.slideDrafts || [])];
+
+      slideDrafts[index] = {
+        ...slideDrafts[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeSectionFourDraft = (index) => {
+    setSectionFourForm((prev) => {
+      const slideDrafts = (prev.slideDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: slideDrafts.map((draft) => draft.file),
+        imageFile: slideDrafts[0]?.file || null,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
   const updateSectionFiveField = (field, value) => {
     setSectionFiveForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
@@ -848,15 +985,49 @@ export default function PageEdit() {
   };
 
   const handleSectionFourImageChange = (e) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
 
-    if (!file) return;
+    if (!files.length) return;
 
-    setSectionFourForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
+    if (sectionFourForm.id) {
+      const file = files[0];
+
+      setSectionFourForm((prev) => ({
+        ...prev,
+        imageFile: file,
+        imagePreview: URL.createObjectURL(file),
+      }));
+
+      setSavedMessage(false);
+      return;
+    }
+
+    setSectionFourForm((prev) => {
+      const nextSortStart = sectionFourSlides.length + 1;
+      const slideDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          eyebrow: "For Every Event",
+          title_line_one: "",
+          title_line_two: "",
+          description: "",
+          sort_order: nextSortStart + index,
+          is_active: true,
+        };
+      });
+
+      return {
+        ...prev,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
@@ -905,13 +1076,116 @@ export default function PageEdit() {
     setSavedMessage(false);
   };
 
+  const handleGenericImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const preview = reader.result || "";
+
+      setForm((prev) => ({
+        ...prev,
+        imageFile: file,
+        imageUrl: preview,
+        imagePreview: preview,
+      }));
+
+      setSavedMessage(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleHomeSectionOneSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const isUpdate = Boolean(form.id);
+      const url = isUpdate
+        ? `${API_BASE_URL}/admin/home-section-one/${form.id}`
+        : `${API_BASE_URL}/admin/home-section-one`;
+
+      const formData = new FormData();
+
+      formData.append("title", form.title || "");
+      formData.append("subtitle", form.subtitle || "");
+      formData.append("description", form.description || "");
+      formData.append("is_active", form.isActive ? "1" : "0");
+
+      if (form.imageFile) {
+        formData.append("image", form.imageFile);
+      }
+
+      if (isUpdate) {
+        formData.append("_method", "PUT");
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = getErrorMessage(
+          data,
+          ["title", "subtitle", "description", "image", "is_active"],
+          "Failed to save Home Section One."
+        );
+
+        throw new Error(message);
+      }
+
+      const formatted = formatHomeSectionOne(data?.data || data);
+
+      setSavedData(formatted);
+      setForm(emptyGenericForm);
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving Home Section One.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleGenericSave = () => {
     setSaving(true);
 
     const allSections = loadSections();
+    const { imageFile, ...safeForm } = form;
+
+    const genericPayload = isHomeSectionTwo
+      ? {
+          id: safeForm.id || null,
+          title: safeForm.title || "",
+          subtitle: safeForm.subtitle || "",
+          description: safeForm.description || "",
+          image: safeForm.image || "",
+          image_url: safeForm.image_url || "",
+          imageUrl: safeForm.imageUrl || safeForm.imagePreview || "",
+          imagePreview: safeForm.imagePreview || safeForm.imageUrl || "",
+          isActive: safeForm.isActive,
+        }
+      : safeForm;
 
     const updatedSection = {
-      ...form,
+      ...genericPayload,
       sectionId: currentSection.id,
       sectionSlug: currentSection.slug,
       sectionName: currentSection.title,
@@ -926,12 +1200,9 @@ export default function PageEdit() {
     saveSections(updatedSections);
 
     setSavedData(updatedSection);
+    setForm(emptyGenericForm);
     setSaving(false);
-    setSavedMessage(true);
-
-    setTimeout(() => {
-      setSavedMessage(false);
-    }, 2500);
+    showSavedSuccess();
   };
 
   const saveSingleWelcomeSlide = async ({ file, isUpdate, draft = null }) => {
@@ -1053,11 +1324,7 @@ export default function PageEdit() {
       setWelcomeSlideForm(emptyWelcomeSlideForm);
       await fetchWelcomeSlides();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving welcome slide.");
     } finally {
@@ -1135,18 +1402,75 @@ export default function PageEdit() {
         updatedAt: new Date().toISOString(),
       };
 
-      setSectionThreeForm(formatted);
+      setSectionThreeForm(emptySectionThreeForm);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveSingleSectionFourSlide = async ({ file, isUpdate, draft = null }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const activeSlide = draft || sectionFourForm;
+    const url = isUpdate
+      ? `${API_BASE_URL}/home-section-fours/${sectionFourForm.id}`
+      : `${API_BASE_URL}/home-section-fours`;
+
+    const formData = new FormData();
+
+    formData.append("eyebrow", activeSlide.eyebrow || "");
+    formData.append("title_line_one", activeSlide.title_line_one || "");
+    formData.append("title_line_two", activeSlide.title_line_two || "");
+    formData.append("description", activeSlide.description || "");
+    formData.append("sort_order", activeSlide.sort_order || 0);
+    formData.append("is_active", activeSlide.is_active ? "1" : "0");
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        [
+          "eyebrow",
+          "title_line_one",
+          "title_line_two",
+          "description",
+          "image",
+          "sort_order",
+          "is_active",
+        ],
+        "Failed to save Home Section Four slide."
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
   };
 
   const handleSectionFourSave = async () => {
@@ -1155,97 +1479,47 @@ export default function PageEdit() {
       setError("");
       setSavedMessage(false);
 
-      const token = getToken();
-
-      if (!token) {
-        throw new Error("You are not logged in. Please login again.");
-      }
-
-      const formData = new FormData();
-
-      if (sectionFourForm.eyebrow) {
-        formData.append("eyebrow", sectionFourForm.eyebrow);
-      }
-
-      formData.append("title_line_one", sectionFourForm.title_line_one);
-      formData.append("title_line_two", sectionFourForm.title_line_two);
-
-      if (sectionFourForm.description) {
-        formData.append("description", sectionFourForm.description);
-      }
-
-      formData.append("sort_order", sectionFourForm.sort_order || 0);
-      formData.append("is_active", sectionFourForm.is_active ? "1" : "0");
-
-      if (sectionFourForm.imageFile) {
-        formData.append("image", sectionFourForm.imageFile);
-      }
-
       const isUpdate = Boolean(sectionFourForm.id);
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/home-section-fours/${sectionFourForm.id}`
-        : `${API_BASE_URL}/home-section-fours`;
+      const slideDrafts = sectionFourForm.slideDrafts || [];
 
       if (isUpdate) {
-        formData.append("_method", "PUT");
-      }
+        if (!sectionFourForm.title_line_one.trim()) {
+          throw new Error("Please enter the slide title line one.");
+        }
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+        await saveSingleSectionFourSlide({
+          file: sectionFourForm.imageFile,
+          isUpdate: true,
+        });
+      } else {
+        if (!slideDrafts.length) {
+          throw new Error("Please upload at least one section image first.");
+        }
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const message = getErrorMessage(
-          data,
-          [
-            "eyebrow",
-            "title_line_one",
-            "title_line_two",
-            "description",
-            "image",
-            "sort_order",
-            "is_active",
-          ],
-          "Failed to save Home Section Four."
+        const missingTitleIndex = slideDrafts.findIndex(
+          (draft) => !draft.title_line_one?.trim()
         );
 
-        throw new Error(message);
+        if (missingTitleIndex !== -1) {
+          throw new Error(
+            `Please enter title line one for section image #${missingTitleIndex + 1}.`
+          );
+        }
+
+        for (const draft of slideDrafts) {
+          await saveSingleSectionFourSlide({
+            file: draft.file,
+            isUpdate: false,
+            draft,
+          });
+        }
       }
 
-      const item = data?.data || data;
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        eyebrow: item.eyebrow || "",
-        title_line_one: item.title_line_one || "",
-        title_line_two: item.title_line_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        sort_order: item.sort_order ?? 0,
-        is_active: toBoolean(item.is_active),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setSectionFourForm(formatted);
-      setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      setSectionFourForm(emptySectionFourForm);
+      await fetchSectionFour();
+      showSavedSuccess();
     } catch (err) {
-      setError(err.message || "Something went wrong while saving.");
+      setError(err.message || "Something went wrong while saving Home Section Four.");
     } finally {
       setSaving(false);
     }
@@ -1345,13 +1619,9 @@ export default function PageEdit() {
         updatedAt: new Date().toISOString(),
       };
 
-      setSectionFiveForm(formatted);
+      setSectionFiveForm(emptySectionFiveForm);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving.");
     } finally {
@@ -1421,11 +1691,7 @@ export default function PageEdit() {
       setSectionSixForm(emptySectionSixForm);
       await fetchSectionSix();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving gallery.");
     } finally {
@@ -1507,13 +1773,9 @@ export default function PageEdit() {
         updatedAt: new Date().toISOString(),
       };
 
-      setUrlContentFormBySection(sectionName, formatted);
+      setUrlContentFormBySection(sectionName, emptyUrlContentForm);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(
         err.message ||
@@ -1581,11 +1843,7 @@ export default function PageEdit() {
       setWelcomeSlideForm(emptyWelcomeSlideForm);
       await fetchWelcomeSlides();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while deleting welcome slide.");
     } finally {
@@ -1643,11 +1901,7 @@ export default function PageEdit() {
       setSectionSixForm(emptySectionSixForm);
       await fetchSectionSix();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while deleting image.");
     } finally {
@@ -1655,9 +1909,239 @@ export default function PageEdit() {
     }
   };
 
+
+  const handleHomeSectionOneEdit = () => {
+    if (!savedData) return;
+
+    setForm({
+      ...emptyGenericForm,
+      ...savedData,
+      imageFile: null,
+      imagePreview: savedData.imagePreview || savedData.imageUrl || "",
+      imageUrl: savedData.imageUrl || savedData.imagePreview || "",
+      isActive: savedData.isActive ?? true,
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleHomeSectionOneDelete = async () => {
+    if (!savedData?.id) return;
+    if (!confirm("Delete Home Section One content?")) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/home-section-one/${savedData.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to delete Home Section One.");
+      }
+
+      setForm(emptyGenericForm);
+      setSavedData(null);
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while deleting Home Section One.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSingleSectionEdit = (sectionKey, data) => {
+    if (!data) return;
+
+    if (sectionKey === "section-three") {
+      setSectionThreeForm({
+        ...emptySectionThreeForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+      });
+    }
+
+    if (sectionKey === "section-four") {
+      setSectionFourForm({
+        ...emptySectionFourForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+        is_active: toBoolean(data.is_active),
+      });
+    }
+
+    if (sectionKey === "section-five") {
+      setSectionFiveForm({
+        ...emptySectionFiveForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+        is_active: toBoolean(data.is_active),
+      });
+    }
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleSingleSectionDelete = async (sectionKey, id) => {
+    if (!id) return;
+    if (!confirm("Delete this section content?")) return;
+
+    const endpointMap = {
+      "section-three": `home-section-threes/${id}`,
+      "section-four": `home-section-fours/${id}`,
+      "section-five": `home-section-fives/${id}`,
+    };
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/${endpointMap[sectionKey]}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to delete section content.");
+      }
+
+      if (sectionKey === "section-three") setSectionThreeForm(emptySectionThreeForm);
+
+      if (sectionKey === "section-four") {
+        setSectionFourForm(emptySectionFourForm);
+        await fetchSectionFour();
+        showSavedSuccess();
+        return;
+      }
+
+      if (sectionKey === "section-five") setSectionFiveForm(emptySectionFiveForm);
+
+      setSavedData(null);
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while deleting section content.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUrlContentEdit = (sectionName, data) => {
+    if (!data) return;
+
+    setUrlContentFormBySection(sectionName, {
+      ...emptyUrlContentForm,
+      ...data,
+      imageFile: null,
+      imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleUrlContentDelete = async (sectionName, id) => {
+    if (!id) return;
+    if (!confirm(`Delete ${getSectionTitle(sectionName)} content?`)) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const adminPath = getAdminPath(sectionName);
+      const response = await fetch(`${API_BASE_URL}/${adminPath}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || `Failed to delete ${getSectionTitle(sectionName)}.`);
+      }
+
+      setUrlContentFormBySection(sectionName, emptyUrlContentForm);
+      setSavedData(null);
+      showSavedSuccess();
+    } catch (err) {
+      setError(
+        err.message ||
+          `Something went wrong while deleting ${getSectionTitle(sectionName)}.`
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGenericEdit = () => {
+    if (!savedData) return;
+
+    setForm(formatGenericStorageSection(savedData));
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleGenericDelete = () => {
+    if (!savedData) return;
+    if (!confirm("Delete this section content?")) return;
+
+    const allSections = loadSections();
+    delete allSections[currentSection.slug];
+    saveSections(allSections);
+
+    setForm(emptyGenericForm);
+    setSavedData(null);
+    showSavedSuccess();
+  };
+
   const handleSave = () => {
     if (isWelcomeSection) {
       handleWelcomeSlideSave();
+      return;
+    }
+
+    if (isHomeSectionOne) {
+      handleHomeSectionOneSave();
       return;
     }
 
@@ -1719,27 +2203,14 @@ export default function PageEdit() {
 
     if (isWelcomeSection) {
       setWelcomeSlideForm(emptyWelcomeSlideForm);
+    } else if (isHomeSectionOne) {
+      setForm(emptyGenericForm);
     } else if (isSectionThree) {
-      setSectionThreeForm((prev) => ({
-        ...emptySectionThreeForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionThreeForm(emptySectionThreeForm);
     } else if (isSectionFour) {
-      setSectionFourForm((prev) => ({
-        ...emptySectionFourForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionFourForm(emptySectionFourForm);
     } else if (isSectionFive) {
-      setSectionFiveForm((prev) => ({
-        ...emptySectionFiveForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionFiveForm(emptySectionFiveForm);
     } else if (isSectionSix) {
       setSectionSixForm(emptySectionSixForm);
     } else if (isSectionSeven) {
@@ -1763,15 +2234,7 @@ export default function PageEdit() {
   };
 
   const keepUrlImageOnClear = (sectionName) => {
-    const prev = getUrlContentFormBySection(sectionName);
-
-    setUrlContentFormBySection(sectionName, {
-      ...emptyUrlContentForm,
-      id: prev.id,
-      image: prev.image,
-      image_url: prev.image_url,
-      imagePreview: prev.imagePreview,
-    });
+    setUrlContentFormBySection(sectionName, emptyUrlContentForm);
   };
 
   const renderWelcomeSlideForm = () => {
@@ -1962,59 +2425,188 @@ export default function PageEdit() {
   };
 
   const renderSectionFourForm = () => {
+    const selectedDrafts = sectionFourForm.slideDrafts || [];
+
     return (
       <div className="space-y-5">
-        <InputField
-          label="Eyebrow"
-          value={sectionFourForm.eyebrow}
-          onChange={(value) => updateSectionFourField("eyebrow", value)}
-          placeholder="Example: Luxury Experience"
-        />
+        {sectionFourForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing event slide #{sectionFourForm.id}. Click “Clear Form” to add new slides instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more images. Each image will have its own eyebrow, title, description, and order.
+          </div>
+        )}
 
-        <InputField
-          label="Title Line One"
-          value={sectionFourForm.title_line_one}
-          onChange={(value) =>
-            updateSectionFourField("title_line_one", value)
-          }
-          placeholder="Enter first title line"
-        />
+        {sectionFourForm.id && (
+          <>
+            <InputField
+              label="Eyebrow"
+              value={sectionFourForm.eyebrow}
+              onChange={(value) => updateSectionFourField("eyebrow", value)}
+              placeholder="Example: For Every Event"
+            />
 
-        <InputField
-          label="Title Line Two"
-          value={sectionFourForm.title_line_two}
-          onChange={(value) =>
-            updateSectionFourField("title_line_two", value)
-          }
-          placeholder="Enter second title line"
-        />
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Title Line One"
+                value={sectionFourForm.title_line_one}
+                onChange={(value) =>
+                  updateSectionFourField("title_line_one", value)
+                }
+                placeholder="Example: Unforgettable"
+              />
 
-        <TextareaField
-          label="Description"
-          value={sectionFourForm.description}
-          onChange={(value) => updateSectionFourField("description", value)}
-          placeholder="Enter slide description"
-        />
+              <InputField
+                label="Title Line Two"
+                value={sectionFourForm.title_line_two}
+                onChange={(value) =>
+                  updateSectionFourField("title_line_two", value)
+                }
+                placeholder="Example: Weddings"
+              />
+            </div>
 
-        <InputField
-          label="Sort Order"
-          type="number"
-          value={sectionFourForm.sort_order}
-          onChange={(value) => updateSectionFourField("sort_order", value)}
-          placeholder="0"
-        />
+            <TextareaField
+              label="Description"
+              value={sectionFourForm.description}
+              onChange={(value) => updateSectionFourField("description", value)}
+              placeholder="Enter slide description"
+            />
 
-        <ActiveToggle
-          label="Active Slide"
-          checked={sectionFourForm.is_active}
-          onChange={(value) => updateSectionFourField("is_active", value)}
-        />
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Sort Order"
+                type="number"
+                value={sectionFourForm.sort_order}
+                onChange={(value) => updateSectionFourField("sort_order", value)}
+                placeholder="0"
+              />
+
+              <ActiveToggle
+                label="Active Slide"
+                checked={sectionFourForm.is_active}
+                onChange={(value) => updateSectionFourField("is_active", value)}
+              />
+            </div>
+          </>
+        )}
 
         <ImageUploadField
+          multiple={!sectionFourForm.id}
           preview={sectionFourForm.imagePreview}
+          previews={sectionFourForm.id ? [] : sectionFourForm.imagePreviews}
           onChange={handleSectionFourImageChange}
-          maxText="JPG, JPEG, PNG, WEBP. Max 4MB."
+          maxText={
+            sectionFourForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
         />
+
+        {!sectionFourForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected event images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Event slide draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Event Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSectionFourDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Eyebrow"
+                    value={draft.eyebrow}
+                    onChange={(value) =>
+                      updateSectionFourDraft(index, "eyebrow", value)
+                    }
+                    placeholder="Example: For Every Event"
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Title Line One"
+                      value={draft.title_line_one}
+                      onChange={(value) =>
+                        updateSectionFourDraft(index, "title_line_one", value)
+                      }
+                      placeholder="Example: Unforgettable"
+                    />
+
+                    <InputField
+                      label="Title Line Two"
+                      value={draft.title_line_two}
+                      onChange={(value) =>
+                        updateSectionFourDraft(index, "title_line_two", value)
+                      }
+                      placeholder="Example: Weddings"
+                    />
+                  </div>
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) =>
+                      updateSectionFourDraft(index, "description", value)
+                    }
+                    placeholder="Enter slide description"
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Sort Order"
+                      type="number"
+                      value={draft.sort_order}
+                      onChange={(value) =>
+                        updateSectionFourDraft(index, "sort_order", value)
+                      }
+                      placeholder="1"
+                    />
+
+                    <ActiveToggle
+                      label="Active Slide"
+                      checked={draft.is_active}
+                      onChange={(value) =>
+                        updateSectionFourDraft(index, "is_active", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -2182,31 +2774,41 @@ export default function PageEdit() {
           placeholder="Enter section description"
         />
 
-        <InputField
-          label="Image URL"
-          icon={Image}
-          type="url"
-          value={form.imageUrl}
-          onChange={(value) => updateGenericField("imageUrl", value)}
-          placeholder="https://example.com/image.jpg"
-        />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <InputField
-            label="Button Text"
-            value={form.buttonText}
-            onChange={(value) => updateGenericField("buttonText", value)}
-            placeholder="Example: Learn More"
+        {isHomeSectionOne || isHomeSectionTwo ? (
+          <ImageUploadField
+            preview={form.imagePreview || form.imageUrl}
+            onChange={handleGenericImageChange}
+            maxText="JPG, JPEG, PNG, WEBP. Upload image file, not URL."
           />
+        ) : (
+          <>
+            <InputField
+              label="Image URL"
+              icon={Image}
+              type="url"
+              value={form.imageUrl}
+              onChange={(value) => updateGenericField("imageUrl", value)}
+              placeholder="https://example.com/image.jpg"
+            />
 
-          <InputField
-            label="Button Link"
-            icon={Link2}
-            value={form.buttonLink}
-            onChange={(value) => updateGenericField("buttonLink", value)}
-            placeholder="Example: /rooms or #about"
-          />
-        </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Button Text"
+                value={form.buttonText}
+                onChange={(value) => updateGenericField("buttonText", value)}
+                placeholder="Example: Learn More"
+              />
+
+              <InputField
+                label="Button Link"
+                icon={Link2}
+                value={form.buttonLink}
+                onChange={(value) => updateGenericField("buttonLink", value)}
+                placeholder="Example: /rooms or #about"
+              />
+            </div>
+          </>
+        )}
 
         <ActiveToggle
           label="Active Section"
@@ -2340,48 +2942,87 @@ export default function PageEdit() {
           </p>
         )}
 
+        <PreviewActions
+          onEdit={() => handleSingleSectionEdit("section-three", savedData)}
+          onDelete={() => handleSingleSectionDelete("section-three", savedData.id)}
+        />
+
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
     );
   };
 
   const renderSectionFourPreview = () => {
-    if (!savedData) {
-      return renderEmptyPreview("No saved section four slide yet");
+    if (!sectionFourSlides.length) {
+      return renderEmptyPreview("No event slides saved yet");
     }
 
     return (
-      <PreviewCard image={savedData.imagePreview}>
-        <div className="flex flex-wrap items-center gap-2">
-          <SectionBadge>{currentSection.title}</SectionBadge>
-
-          <StatusBadge active={savedData.is_active} />
-
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-            Sort: {savedData.sort_order ?? 0}
-          </span>
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Event Slides: {sectionFourSlides.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Click edit to update a slide, or delete to remove it.
+          </p>
         </div>
 
-        {savedData.eyebrow && (
-          <EyebrowText>{savedData.eyebrow}</EyebrowText>
-        )}
+        <div className="grid gap-4">
+          {sectionFourSlides.map((slide) => (
+            <div
+              key={slide.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={slide.imagePreview}
+                  alt={slide.title_line_one || `Event slide ${slide.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
 
-        <h3 className="text-2xl font-bold leading-tight text-slate-900">
-          {savedData.title_line_one || "No title line one saved"}
-        </h3>
+              <div className="space-y-3 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <SectionBadge>Event Slide #{slide.id}</SectionBadge>
+                  <StatusBadge active={toBoolean(slide.is_active)} />
 
-        <h4 className="text-lg font-semibold leading-tight text-amber-600">
-          {savedData.title_line_two || "No title line two saved"}
-        </h4>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                    Sort: {slide.sort_order ?? 0}
+                  </span>
+                </div>
 
-        {savedData.description && (
-          <p className="text-sm leading-7 text-slate-600">
-            {savedData.description}
-          </p>
-        )}
+                {slide.eyebrow && <EyebrowText>{slide.eyebrow}</EyebrowText>}
 
-        {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
-      </PreviewCard>
+                <h3 className="text-2xl font-bold leading-tight text-slate-900">
+                  {slide.title_line_one || "No title line one saved"}
+                </h3>
+
+                <h4 className="text-lg font-semibold leading-tight text-amber-600">
+                  {slide.title_line_two || "No title line two saved"}
+                </h4>
+
+                {slide.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {slide.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleSingleSectionEdit("section-four", slide)}
+                  onDelete={() => handleSingleSectionDelete("section-four", slide.id)}
+                />
+
+                {slide.updatedAt && <UpdatedAt date={slide.updatedAt} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   };
 
@@ -2424,6 +3065,11 @@ export default function PageEdit() {
             )}
           </div>
         )}
+
+        <PreviewActions
+          onEdit={() => handleSingleSectionEdit("section-five", savedData)}
+          onDelete={() => handleSingleSectionDelete("section-five", savedData.id)}
+        />
 
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
@@ -2504,7 +3150,7 @@ export default function PageEdit() {
     );
   };
 
-  const renderUrlContentPreview = (data, emptyTitle) => {
+  const renderUrlContentPreview = (data, emptyTitle, sectionName = null) => {
     if (!data) {
       return renderEmptyPreview(emptyTitle);
     }
@@ -2525,6 +3171,13 @@ export default function PageEdit() {
           </p>
         )}
 
+        {sectionName && (
+          <PreviewActions
+            onEdit={() => handleUrlContentEdit(sectionName, data)}
+            onDelete={() => handleUrlContentDelete(sectionName, data.id)}
+          />
+        )}
+
         {data.updatedAt && <UpdatedAt date={data.updatedAt} />}
       </PreviewCard>
     );
@@ -2535,8 +3188,11 @@ export default function PageEdit() {
       return renderEmptyPreview("No saved content yet");
     }
 
+    const editHandler = isHomeSectionOne ? handleHomeSectionOneEdit : handleGenericEdit;
+    const deleteHandler = isHomeSectionOne ? handleHomeSectionOneDelete : handleGenericDelete;
+
     return (
-      <PreviewCard image={savedData.imageUrl}>
+      <PreviewCard image={savedData.imagePreview || savedData.imageUrl}>
         <div className="flex flex-wrap items-center gap-2">
           <SectionBadge>{currentSection.title}</SectionBadge>
           <StatusBadge active={savedData.isActive} />
@@ -2554,7 +3210,7 @@ export default function PageEdit() {
           </p>
         )}
 
-        {savedData.buttonText && (
+        {!isHomeSectionOne && !isHomeSectionTwo && savedData.buttonText && (
           <div className="pt-2">
             <span className="inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white">
               {savedData.buttonText}
@@ -2567,6 +3223,8 @@ export default function PageEdit() {
             )}
           </div>
         )}
+
+        <PreviewActions onEdit={editHandler} onDelete={deleteHandler} />
 
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
@@ -2665,42 +3323,48 @@ export default function PageEdit() {
     if (isSectionSeven) {
       return renderUrlContentPreview(
         savedData,
-        "No saved fitness section content yet"
+        "No saved fitness section content yet",
+        "fitness"
       );
     }
 
     if (isSectionEight) {
       return renderUrlContentPreview(
         savedData,
-        "No saved parking section content yet"
+        "No saved parking section content yet",
+        "parking"
       );
     }
 
     if (isSectionNine) {
       return renderUrlContentPreview(
         savedData,
-        "No saved restaurant and bar section content yet"
+        "No saved restaurant and bar section content yet",
+        "restaurant-bar"
       );
     }
 
     if (isSectionTen) {
       return renderUrlContentPreview(
         savedData,
-        "No saved sauna section content yet"
+        "No saved sauna section content yet",
+        "sauna"
       );
     }
 
     if (isSectionEleven) {
       return renderUrlContentPreview(
         savedData,
-        "No saved pool section content yet"
+        "No saved pool section content yet",
+        "pool"
       );
     }
 
     if (isSectionTwelve) {
       return renderUrlContentPreview(
         savedData,
-        "No saved family and kids section content yet"
+        "No saved family and kids section content yet",
+        "family-kids"
       );
     }
 
@@ -2718,6 +3382,9 @@ export default function PageEdit() {
 
     if (isSectionSix && sectionSixForm.id) return "Update Image";
     if (isSectionSix) return "Add Image";
+
+    if (isHomeSectionOne && form.id) return "Update Section";
+    if (isHomeSectionTwo && form.id) return "Update Section";
 
     return "Save Section";
   };
@@ -2987,6 +3654,30 @@ function PreviewCard({ image, children }) {
       )}
 
       <div className="space-y-3 p-5">{children}</div>
+    </div>
+  );
+}
+
+function PreviewActions({ onEdit, onDelete }) {
+  return (
+    <div className="flex gap-2 pt-2">
+      <button
+        type="button"
+        onClick={onEdit}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+      >
+        <Pencil size={14} />
+        Edit
+      </button>
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+      >
+        <Trash2 size={14} />
+        Delete
+      </button>
     </div>
   );
 }
