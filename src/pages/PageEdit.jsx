@@ -24,6 +24,7 @@ const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 const STORAGE_KEY = "luxury_homepage_sections";
 
 const homeSections = [
+  { id: 0, slug: "welcome-section", title: "Welcome Section" },
   { id: 1, slug: "home-section-one", title: "Home Section One" },
   { id: 2, slug: "home-section-two", title: "Home Section Two" },
   { id: 3, slug: "home-section-three", title: "Home Section Three" },
@@ -32,19 +33,43 @@ const homeSections = [
   { id: 6, slug: "home-section-six", title: "Home Section Six Gallery" },
   { id: 7, slug: "home-section-seven", title: "Home Section Seven Fitness" },
   { id: 8, slug: "home-section-eight", title: "Home Section Eight Parking" },
-  { id: 9, slug: "home-section-nine", title: "Home Section Nine" },
-  { id: 10, slug: "home-section-ten", title: "Home Section Ten" },
-  { id: 11, slug: "home-section-eleven", title: "Home Section Eleven" },
+  { id: 9, slug: "home-section-nine", title: "Home Section Nine Restaurant Bar" },
+  { id: 10, slug: "home-section-ten", title: "Home Section Ten Sauna" },
+  { id: 11, slug: "home-section-eleven", title: "Home Section Eleven Pool" },
+  { id: 12, slug: "home-section-twelve", title: "Home Section Twelve Family Kids" },
 ];
 
 const emptyGenericForm = {
+  id: null,
   title: "",
   subtitle: "",
   description: "",
+  image: "",
+  image_url: "",
   imageUrl: "",
+  imageFile: null,
+  imagePreview: "",
   buttonText: "",
   buttonLink: "",
   isActive: true,
+};
+
+const emptyWelcomeSlideForm = {
+  id: null,
+  title: "",
+  subtitle: "",
+  description: "",
+  button_text: "",
+  button_link: "",
+  image: "",
+  image_url: "",
+  imageFile: null,
+  imageFiles: [],
+  imagePreview: "",
+  imagePreviews: [],
+  slideDrafts: [],
+  sort_order: 0,
+  is_active: true,
 };
 
 const emptySectionThreeForm = {
@@ -53,8 +78,12 @@ const emptySectionThreeForm = {
   title_two: "",
   description: "",
   image: "",
+  image_url: "",
   imageFile: null,
+  imageFiles: [],
   imagePreview: "",
+  imagePreviews: [],
+  slideDrafts: [],
 };
 
 const emptySectionFourForm = {
@@ -88,7 +117,10 @@ const emptySectionSixForm = {
   image: "",
   image_url: "",
   imageFile: null,
+  imageFiles: [],
   imagePreview: "",
+  imagePreviews: [],
+  imageDrafts: [],
   display_order: "",
   is_active: true,
 };
@@ -102,6 +134,22 @@ const emptyUrlContentForm = {
   image_url: "",
   imageFile: null,
   imagePreview: "",
+};
+
+const emptySectionTenImageForm = {
+  id: null,
+  title: "",
+  subtitle: "",
+  description: "",
+  image: "",
+  image_url: "",
+  imageFile: null,
+  imageFiles: [],
+  imagePreview: "",
+  imagePreviews: [],
+  slideDrafts: [],
+  sort_order: 0,
+  is_active: true,
 };
 
 function loadSections() {
@@ -132,6 +180,14 @@ function buildImageUrl(path) {
     return path;
   }
 
+  if (path.startsWith("/storage/")) {
+    return `${API_ROOT_URL}${path}`;
+  }
+
+  if (path.startsWith("storage/")) {
+    return `${API_ROOT_URL}/${path}`;
+  }
+
   return `${API_ROOT_URL}/storage/${path}`;
 }
 
@@ -159,7 +215,115 @@ function getErrorMessage(data, fields, fallback) {
 }
 
 function getImageValue(item) {
-  return item?.image || item?.image_url || "";
+  return item?.image || item?.image_url || item?.image_path || "";
+}
+
+function formatHomeSectionOne(item) {
+  if (!item) return null;
+
+  const imageValue = getImageValue(item);
+
+  return {
+    id: item.id || null,
+    title: item.title || "",
+    subtitle: item.subtitle || "",
+    description: item.description || "",
+    image: imageValue,
+    image_url: imageValue,
+    imageUrl: buildImageUrl(imageValue),
+    imageFile: null,
+    imagePreview: buildImageUrl(imageValue),
+    isActive: toBoolean(item.is_active ?? item.isActive ?? true),
+    updatedAt: item.updated_at || item.updatedAt || "",
+  };
+}
+
+function formatSectionThreeSlide(item) {
+  if (!item) return null;
+
+  const imageValue = getImageValue(item);
+
+  return {
+    id: item.id || null,
+    title_one: item.title_one || "",
+    title_two: item.title_two || "",
+    description: item.description || "",
+    image: imageValue,
+    image_url: imageValue,
+    imageFile: null,
+    imagePreview: buildImageUrl(imageValue),
+    updatedAt: item.updated_at || item.updatedAt || "",
+  };
+}
+
+function formatSectionTenImage(item) {
+  if (!item) return null;
+
+  const imageValue = getImageValue(item);
+
+  return {
+    id: item.id || null,
+    title: item.title || "",
+    subtitle: item.subtitle || "",
+    description: item.description || "",
+    image: imageValue,
+    image_url: imageValue,
+    imageFile: null,
+    imagePreview: buildImageUrl(imageValue),
+    sort_order: item.sort_order ?? 0,
+    is_active: toBoolean(item.is_active ?? true),
+    updatedAt: item.updated_at || item.updatedAt || "",
+  };
+}
+
+function formatGenericStorageSection(item) {
+  if (!item) return null;
+
+  return {
+    ...emptyGenericForm,
+    ...item,
+    imagePreview: item.imagePreview || item.imageUrl || "",
+    isActive: item.isActive ?? true,
+  };
+}
+
+function getPublicPath(sectionName) {
+  const paths = {
+    fitness: "section7/fitness",
+    parking: "section8/parking",
+    "restaurant-bar": "section9/restaurant-bar",
+    sauna: "section10/sauna",
+    pool: "section11/pool",
+    "family-kids": "section12/family-kids",
+  };
+
+  return paths[sectionName];
+}
+
+function getAdminPath(sectionName) {
+  const paths = {
+    fitness: "admin/section7/fitness",
+    parking: "admin/section8/parking",
+    "restaurant-bar": "admin/section9/restaurant-bar",
+    sauna: "admin/section10/sauna",
+    pool: "admin/section11/pool",
+    "family-kids": "admin/section12/family-kids",
+  };
+
+  return paths[sectionName];
+}
+
+function getSectionTitle(sectionName) {
+  const titles = {
+    fitness: "Section 7 Fitness",
+    parking: "Section 8 Parking",
+    "restaurant-bar": "Section 9 Restaurant Bar",
+    sauna: "Section 10 Sauna",
+    pool: "Section 11 Pool",
+    "family-kids": "Section 12 Family Kids",
+  };
+
+  return titles[sectionName] || "Section";
 }
 
 export default function PageEdit() {
@@ -170,27 +334,45 @@ export default function PageEdit() {
     return homeSections.find((section) => section.slug === sectionSlug);
   }, [sectionSlug]);
 
+  const isWelcomeSection = sectionSlug === "welcome-section";
+  const isHomeSectionOne = sectionSlug === "home-section-one";
+  const isHomeSectionTwo = sectionSlug === "home-section-two";
   const isSectionThree = sectionSlug === "home-section-three";
   const isSectionFour = sectionSlug === "home-section-four";
   const isSectionFive = sectionSlug === "home-section-five";
   const isSectionSix = sectionSlug === "home-section-six";
   const isSectionSeven = sectionSlug === "home-section-seven";
   const isSectionEight = sectionSlug === "home-section-eight";
+  const isSectionNine = sectionSlug === "home-section-nine";
+  const isSectionTen = sectionSlug === "home-section-ten";
+  const isSectionEleven = sectionSlug === "home-section-eleven";
+  const isSectionTwelve = sectionSlug === "home-section-twelve";
 
   const isLaravelApiSection =
+    isWelcomeSection ||
+    isHomeSectionOne ||
     isSectionThree ||
     isSectionFour ||
     isSectionFive ||
     isSectionSix ||
     isSectionSeven ||
-    isSectionEight;
+    isSectionEight ||
+    isSectionNine ||
+    isSectionTen ||
+    isSectionEleven ||
+    isSectionTwelve;
 
   const [form, setForm] = useState(emptyGenericForm);
+
+  const [welcomeSlideForm, setWelcomeSlideForm] = useState(
+    emptyWelcomeSlideForm
+  );
+  const [welcomeSlides, setWelcomeSlides] = useState([]);
 
   const [sectionThreeForm, setSectionThreeForm] = useState(
     emptySectionThreeForm
   );
-
+  const [sectionThreeSlides, setSectionThreeSlides] = useState([]);
   const [sectionFourForm, setSectionFourForm] = useState(emptySectionFourForm);
   const [sectionFiveForm, setSectionFiveForm] = useState(emptySectionFiveForm);
 
@@ -198,10 +380,20 @@ export default function PageEdit() {
   const [sectionSixImages, setSectionSixImages] = useState([]);
 
   const [sectionSevenForm, setSectionSevenForm] =
-    useState(emptyUrlContentForm);
-
+    useState(emptySectionTenImageForm);
+  const [sectionSevenImages, setSectionSevenImages] = useState([]);
   const [sectionEightForm, setSectionEightForm] =
+    useState(emptySectionTenImageForm);
+  const [sectionEightImages, setSectionEightImages] = useState([]);
+  const [sectionNineForm, setSectionNineForm] = useState(emptySectionTenImageForm);
+  const [sectionNineImages, setSectionNineImages] = useState([]);
+  const [sectionTenForm, setSectionTenForm] = useState(emptySectionTenImageForm);
+  const [sectionTenImages, setSectionTenImages] = useState([]);
+  const [sectionElevenForm, setSectionElevenForm] =
     useState(emptyUrlContentForm);
+  const [sectionTwelveForm, setSectionTwelveForm] =
+    useState(emptySectionTenImageForm);
+  const [sectionTwelveImages, setSectionTwelveImages] = useState([]);
 
   const [savedData, setSavedData] = useState(null);
 
@@ -216,6 +408,16 @@ export default function PageEdit() {
 
     setError("");
     setSavedMessage(false);
+
+    if (isWelcomeSection) {
+      fetchWelcomeSlides();
+      return;
+    }
+
+    if (isHomeSectionOne) {
+      fetchHomeSectionOne();
+      return;
+    }
 
     if (isSectionThree) {
       fetchSectionThree();
@@ -238,12 +440,32 @@ export default function PageEdit() {
     }
 
     if (isSectionSeven) {
-      fetchSectionSeven();
+      fetchUrlContentSection("fitness");
       return;
     }
 
     if (isSectionEight) {
-      fetchSectionEight();
+      fetchUrlContentSection("parking");
+      return;
+    }
+
+    if (isSectionNine) {
+      fetchUrlContentSection("restaurant-bar");
+      return;
+    }
+
+    if (isSectionTen) {
+      fetchUrlContentSection("sauna");
+      return;
+    }
+
+    if (isSectionEleven) {
+      fetchUrlContentSection("pool");
+      return;
+    }
+
+    if (isSectionTwelve) {
+      fetchUrlContentSection("family-kids");
       return;
     }
 
@@ -251,21 +473,169 @@ export default function PageEdit() {
     const existingData = allSections[currentSection.slug] || null;
 
     if (existingData) {
-      setForm(existingData);
-      setSavedData(existingData);
+      const formattedGenericData = formatGenericStorageSection(existingData);
+
+      setForm(emptyGenericForm);
+      setSavedData(formattedGenericData);
     } else {
       setForm(emptyGenericForm);
       setSavedData(null);
     }
   }, [
     currentSection,
+    isWelcomeSection,
+    isHomeSectionOne,
+    isHomeSectionTwo,
     isSectionThree,
     isSectionFour,
     isSectionFive,
     isSectionSix,
     isSectionSeven,
     isSectionEight,
+    isSectionNine,
+    isSectionTen,
+    isSectionEleven,
+    isSectionTwelve,
   ]);
+
+  const setUrlContentFormBySection = (sectionName, data) => {
+    if (sectionName === "fitness") setSectionSevenForm(data);
+    if (sectionName === "parking") setSectionEightForm(data);
+    if (sectionName === "restaurant-bar") setSectionNineForm(data);
+    if (sectionName === "sauna") setSectionTenForm(data);
+    if (sectionName === "pool") setSectionElevenForm(data);
+    if (sectionName === "family-kids") setSectionTwelveForm(data);
+  };
+
+  const getUrlContentFormBySection = (sectionName) => {
+    if (sectionName === "fitness") return sectionSevenForm;
+    if (sectionName === "parking") return sectionEightForm;
+    if (sectionName === "restaurant-bar") return sectionNineForm;
+    if (sectionName === "sauna") return sectionTenForm;
+    if (sectionName === "pool") return sectionElevenForm;
+    if (sectionName === "family-kids") return sectionTwelveForm;
+
+    return emptyUrlContentForm;
+  };
+
+  const isMultiUrlContentSection = (sectionName) =>
+    ["fitness", "parking", "restaurant-bar", "sauna", "family-kids"].includes(
+      sectionName
+    );
+
+  const setUrlContentImagesBySection = (sectionName, images) => {
+    if (sectionName === "fitness") setSectionSevenImages(images);
+    if (sectionName === "parking") setSectionEightImages(images);
+    if (sectionName === "restaurant-bar") setSectionNineImages(images);
+    if (sectionName === "sauna") setSectionTenImages(images);
+    if (sectionName === "family-kids") setSectionTwelveImages(images);
+  };
+
+  const getUrlContentImagesBySection = (sectionName) => {
+    if (sectionName === "fitness") return sectionSevenImages;
+    if (sectionName === "parking") return sectionEightImages;
+    if (sectionName === "restaurant-bar") return sectionNineImages;
+    if (sectionName === "sauna") return sectionTenImages;
+    if (sectionName === "family-kids") return sectionTwelveImages;
+
+    return [];
+  };
+
+  const getUrlContentLabel = (sectionName) => {
+    const labels = {
+      fitness: "Fitness",
+      parking: "Parking",
+      "restaurant-bar": "Restaurant and Bar",
+      sauna: "Sauna",
+      "family-kids": "Family and Kids",
+    };
+
+    return labels[sectionName] || getSectionTitle(sectionName);
+  };
+
+  const showSavedSuccess = () => {
+    setSavedMessage(true);
+
+    setTimeout(() => {
+      setSavedMessage(false);
+    }, 2500);
+  };
+
+  const fetchHomeSectionOne = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_BASE_URL}/home-section-one`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load Home Section One.");
+      }
+
+      const item = data?.data || null;
+      const formatted = formatHomeSectionOne(item);
+
+      setSavedData(formatted);
+      setForm(emptyGenericForm);
+    } catch (err) {
+      setSavedData(null);
+      setForm(emptyGenericForm);
+      setError(err.message || "Something went wrong while loading Home Section One.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchWelcomeSlides = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_BASE_URL}/welcome-slides`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load Welcome Slides.");
+      }
+
+      const slides = getItems(data).map((item) => {
+        const imageValue = getImageValue(item);
+
+        return {
+          ...item,
+          image: imageValue,
+          image_url: imageValue,
+          imagePreview: buildImageUrl(imageValue),
+          is_active: toBoolean(item.is_active),
+        };
+      });
+
+      setWelcomeSlides(slides);
+      setSavedData(slides);
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+    } catch (err) {
+      setWelcomeSlides([]);
+      setSavedData([]);
+      setError(
+        err.message || "Something went wrong while loading welcome slides."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchSectionThree = async () => {
     try {
@@ -285,35 +655,22 @@ export default function PageEdit() {
         throw new Error(data?.message || "Failed to load Home Section Three.");
       }
 
-      const item = getItems(data)[0] || null;
+      const slides = getItems(data)
+        .map(formatSectionThreeSlide)
+        .filter(Boolean);
 
-      if (!item) {
-        setSectionThreeForm(emptySectionThreeForm);
-        setSavedData(null);
-        return;
-      }
-
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title_one: item.title_one || "",
-        title_two: item.title_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-      };
-
-      setSectionThreeForm(formatted);
-      setSavedData(formatted);
+      setSectionThreeSlides(slides);
+      setSavedData(slides);
+      setSectionThreeForm(emptySectionThreeForm);
     } catch (err) {
+      setSectionThreeSlides([]);
+      setSavedData([]);
+      setSectionThreeForm(emptySectionThreeForm);
       setError(err.message || "Something went wrong while loading data.");
     } finally {
       setLoading(false);
     }
   };
-
   const fetchSectionFour = async () => {
     try {
       setLoading(true);
@@ -355,7 +712,7 @@ export default function PageEdit() {
         is_active: toBoolean(item.is_active),
       };
 
-      setSectionFourForm(formatted);
+      setSectionFourForm(emptySectionFourForm);
       setSavedData(formatted);
     } catch (err) {
       setError(err.message || "Something went wrong while loading data.");
@@ -405,7 +762,7 @@ export default function PageEdit() {
         is_active: toBoolean(item.is_active),
       };
 
-      setSectionFiveForm(formatted);
+      setSectionFiveForm(emptySectionFiveForm);
       setSavedData(formatted);
     } catch (err) {
       setError(err.message || "Something went wrong while loading data.");
@@ -419,7 +776,7 @@ export default function PageEdit() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/section-6-gallery/active`, {
+      const response = await fetch(`${API_BASE_URL}/section6/gallery`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -455,12 +812,13 @@ export default function PageEdit() {
     }
   };
 
-  const fetchSectionSeven = async () => {
+  const fetchUrlContentSection = async (sectionName) => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/section-7-fitness`, {
+      const publicPath = getPublicPath(sectionName);
+      const response = await fetch(`${API_BASE_URL}/${publicPath}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -470,19 +828,35 @@ export default function PageEdit() {
       const data = await response.json();
 
       if (response.status === 404) {
-        setSectionSevenForm(emptyUrlContentForm);
+        if (isMultiUrlContentSection(sectionName)) {
+          setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+          setUrlContentImagesBySection(sectionName, []);
+        } else {
+          setUrlContentFormBySection(sectionName, emptyUrlContentForm);
+        }
         setSavedData(null);
         return;
       }
 
       if (!response.ok) {
-        throw new Error(data?.message || "Failed to load Section 7 Fitness.");
+        throw new Error(
+          data?.message || `Failed to load ${getSectionTitle(sectionName)}.`
+        );
+      }
+
+      if (isMultiUrlContentSection(sectionName)) {
+        const images = getItems(data).map(formatSectionTenImage).filter(Boolean);
+
+        setUrlContentImagesBySection(sectionName, images);
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+        setSavedData(images);
+        return;
       }
 
       const item = data?.data || null;
 
       if (!item) {
-        setSectionSevenForm(emptyUrlContentForm);
+        setUrlContentFormBySection(sectionName, emptyUrlContentForm);
         setSavedData(null);
         return;
       }
@@ -498,66 +872,21 @@ export default function PageEdit() {
         image_url: imageValue,
         imageFile: null,
         imagePreview: buildImageUrl(imageValue),
+        updatedAt: item.updated_at || item.updatedAt || "",
       };
 
-      setSectionSevenForm(formatted);
+      setUrlContentFormBySection(sectionName, emptyUrlContentForm);
       setSavedData(formatted);
     } catch (err) {
-      setError(err.message || "Something went wrong while loading fitness.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSectionEight = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch(`${API_BASE_URL}/section-8-parking`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.status === 404) {
-        setSectionEightForm(emptyUrlContentForm);
-        setSavedData(null);
-        return;
+      if (isMultiUrlContentSection(sectionName)) {
+        setUrlContentImagesBySection(sectionName, []);
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
       }
 
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to load Section 8 Parking.");
-      }
-
-      const item = data?.data || null;
-
-      if (!item) {
-        setSectionEightForm(emptyUrlContentForm);
-        setSavedData(null);
-        return;
-      }
-
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title: item.title || "",
-        subtitle: item.subtitle || "",
-        description: item.description || "",
-        image: imageValue,
-        image_url: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-      };
-
-      setSectionEightForm(formatted);
-      setSavedData(formatted);
-    } catch (err) {
-      setError(err.message || "Something went wrong while loading parking.");
+      setError(
+        err.message ||
+          `Something went wrong while loading ${getSectionTitle(sectionName)}.`
+      );
     } finally {
       setLoading(false);
     }
@@ -588,82 +917,296 @@ export default function PageEdit() {
   }
 
   const updateGenericField = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
+
+  const updateWelcomeSlideField = (field, value) => {
+    setWelcomeSlideForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
+
+  const updateWelcomeSlideDraft = (index, field, value) => {
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = [...(prev.slideDrafts || [])];
+
+      slideDrafts[index] = {
+        ...slideDrafts[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeWelcomeSlideDraft = (index) => {
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = (prev.slideDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: slideDrafts.map((draft) => draft.file),
+        imageFile: slideDrafts[0]?.file || null,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
 
   const updateSectionThreeField = (field, value) => {
-    setSectionThreeForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setSectionThreeForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
+
+  const updateSectionThreeDraft = (index, field, value) => {
+    setSectionThreeForm((prev) => {
+      const slideDrafts = [...(prev.slideDrafts || [])];
+
+      slideDrafts[index] = {
+        ...slideDrafts[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeSectionThreeDraft = (index) => {
+    setSectionThreeForm((prev) => {
+      const slideDrafts = (prev.slideDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: slideDrafts.map((draft) => draft.file),
+        imageFile: slideDrafts[0]?.file || null,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
 
   const updateSectionFourField = (field, value) => {
-    setSectionFourForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
+    setSectionFourForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionFiveField = (field, value) => {
-    setSectionFiveForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
+    setSectionFiveForm((prev) => ({ ...prev, [field]: value }));
     setSavedMessage(false);
   };
 
   const updateSectionSixField = (field, value) => {
-    setSectionSixForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setSectionSixForm((prev) => ({ ...prev, [field]: value }));
+    setSavedMessage(false);
+  };
+
+  const removeSectionSixDraft = (index) => {
+    setSectionSixForm((prev) => {
+      const imageDrafts = (prev.imageDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: imageDrafts.map((draft) => draft.file),
+        imageFile: imageDrafts[0]?.file || null,
+        imagePreview: imageDrafts[0]?.preview || "",
+        imagePreviews: imageDrafts.map((draft) => draft.preview),
+        imageDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
 
-  const updateSectionSevenField = (field, value) => {
-    setSectionSevenForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const updateSectionTenDraft = (index, field, value) => {
+    setSectionTenForm((prev) => {
+      const slideDrafts = [...(prev.slideDrafts || [])];
+
+      slideDrafts[index] = {
+        ...slideDrafts[index],
+        [field]: value,
+      };
+
+      return {
+        ...prev,
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
 
-  const updateSectionEightField = (field, value) => {
-    setSectionEightForm((prev) => ({
-      ...prev,
+  const removeSectionTenDraft = (index) => {
+    setSectionTenForm((prev) => {
+      const slideDrafts = (prev.slideDrafts || []).filter(
+        (_, itemIndex) => itemIndex !== index
+      );
+
+      return {
+        ...prev,
+        imageFiles: slideDrafts.map((draft) => draft.file),
+        imageFile: slideDrafts[0]?.file || null,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
+
+    setSavedMessage(false);
+  };
+
+
+  const updateUrlContentDraft = (sectionName, index, field, value) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+    const slideDrafts = [...(currentForm.slideDrafts || [])];
+
+    slideDrafts[index] = {
+      ...slideDrafts[index],
       [field]: value,
-    }));
+    };
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      slideDrafts,
+    });
+
+    setSavedMessage(false);
+  };
+
+  const removeUrlContentDraft = (sectionName, index) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+    const slideDrafts = (currentForm.slideDrafts || []).filter(
+      (_, itemIndex) => itemIndex !== index
+    );
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      imageFiles: slideDrafts.map((draft) => draft.file),
+      imageFile: slideDrafts[0]?.file || null,
+      imagePreview: slideDrafts[0]?.preview || "",
+      imagePreviews: slideDrafts.map((draft) => draft.preview),
+      slideDrafts,
+    });
+
+    setSavedMessage(false);
+  };
+
+  const updateSectionSevenDraft = (index, field, value) =>
+    updateUrlContentDraft("fitness", index, field, value);
+
+  const removeSectionSevenDraft = (index) =>
+    removeUrlContentDraft("fitness", index);
+
+  const updateUrlContentField = (sectionName, field, value) => {
+    const currentForm = getUrlContentFormBySection(sectionName);
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      [field]: value,
+    });
+
+    setSavedMessage(false);
+  };
+
+  const handleWelcomeSlideImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) return;
+
+    setWelcomeSlideForm((prev) => {
+      const slideDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          title: "",
+          subtitle: "",
+          description: "",
+          button_text: "",
+          button_link: "",
+          sort_order: index + 1,
+          is_active: true,
+        };
+      });
+
+      return {
+        ...prev,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
 
   const handleSectionThreeImageChange = (e) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
 
-    if (!file) return;
+    if (!files.length) return;
 
-    setSectionThreeForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
+    if (sectionThreeForm.id) {
+      const file = files[0];
+
+      setSectionThreeForm((prev) => ({
+        ...prev,
+        imageFile: file,
+        imagePreview: URL.createObjectURL(file),
+      }));
+
+      setSavedMessage(false);
+      return;
+    }
+
+    setSectionThreeForm((prev) => {
+      const slideDrafts = files.map((file) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          title_one: "",
+          title_two: "",
+          description: "",
+        };
+      });
+
+      return {
+        ...prev,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      };
+    });
 
     setSavedMessage(false);
   };
-
   const handleSectionFourImageChange = (e) => {
     const file = e.target.files?.[0];
 
@@ -693,77 +1236,132 @@ export default function PageEdit() {
   };
 
   const handleSectionSixImageChange = (e) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
 
-    if (!file) return;
+    if (!files.length) return;
 
-    setSectionSixForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
+    if (sectionSixForm.id) {
+      const file = files[0];
 
-    setSavedMessage(false);
-  };
+      setSectionSixForm((prev) => ({
+        ...prev,
+        imageFile: file,
+        imagePreview: URL.createObjectURL(file),
+      }));
 
-  const handleSectionSevenImageChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setSectionSevenForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
-
-    setSavedMessage(false);
-  };
-
-  const handleSectionEightImageChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setSectionEightForm((prev) => ({
-      ...prev,
-      imageFile: file,
-      imagePreview: URL.createObjectURL(file),
-    }));
-
-    setSavedMessage(false);
-  };
-
-  const handleGenericSave = () => {
-    setSaving(true);
-
-    const allSections = loadSections();
-
-    const updatedSection = {
-      ...form,
-      sectionId: currentSection.id,
-      sectionSlug: currentSection.slug,
-      sectionName: currentSection.title,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const updatedSections = {
-      ...allSections,
-      [currentSection.slug]: updatedSection,
-    };
-
-    saveSections(updatedSections);
-
-    setSavedData(updatedSection);
-    setSaving(false);
-    setSavedMessage(true);
-
-    setTimeout(() => {
       setSavedMessage(false);
-    }, 2500);
+      return;
+    }
+
+    setSectionSixForm((prev) => {
+      const imageDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          display_order: index + 1,
+          is_active: true,
+        };
+      });
+
+      return {
+        ...prev,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: imageDrafts[0]?.preview || "",
+        imagePreviews: imageDrafts.map((draft) => draft.preview),
+        imageDrafts,
+      };
+    });
+
+    setSavedMessage(false);
   };
 
-  const handleSectionThreeSave = async () => {
+  const handleUrlContentImageChange = (sectionName, e) => {
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) return;
+
+    if (isMultiUrlContentSection(sectionName)) {
+      const activeForm = getUrlContentFormBySection(sectionName);
+
+      if (activeForm.id) {
+        const file = files[0];
+
+        setUrlContentFormBySection(sectionName, {
+          ...activeForm,
+          imageFile: file,
+          imagePreview: URL.createObjectURL(file),
+        });
+
+        setSavedMessage(false);
+        return;
+      }
+
+      const slideDrafts = files.map((file, index) => {
+        const preview = URL.createObjectURL(file);
+
+        return {
+          file,
+          preview,
+          title: "",
+          subtitle: "",
+          description: "",
+          sort_order: index + 1,
+          is_active: true,
+        };
+      });
+
+      setUrlContentFormBySection(sectionName, {
+        ...activeForm,
+        imageFile: files[0],
+        imageFiles: files,
+        imagePreview: slideDrafts[0]?.preview || "",
+        imagePreviews: slideDrafts.map((draft) => draft.preview),
+        slideDrafts,
+      });
+
+      setSavedMessage(false);
+      return;
+    }
+
+    const file = files[0];
+    const currentForm = getUrlContentFormBySection(sectionName);
+
+    setUrlContentFormBySection(sectionName, {
+      ...currentForm,
+      imageFile: file,
+      imagePreview: URL.createObjectURL(file),
+    });
+
+    setSavedMessage(false);
+  };
+
+  const handleGenericImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const preview = reader.result || "";
+
+      setForm((prev) => ({
+        ...prev,
+        imageFile: file,
+        imageUrl: preview,
+        imagePreview: preview,
+      }));
+
+      setSavedMessage(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleHomeSectionOneSave = async () => {
     try {
       setSaving(true);
       setError("");
@@ -775,24 +1373,21 @@ export default function PageEdit() {
         throw new Error("You are not logged in. Please login again.");
       }
 
+      const isUpdate = Boolean(form.id);
+      const url = isUpdate
+        ? `${API_BASE_URL}/admin/home-section-one/${form.id}`
+        : `${API_BASE_URL}/admin/home-section-one`;
+
       const formData = new FormData();
 
-      formData.append("title_one", sectionThreeForm.title_one);
-      formData.append("title_two", sectionThreeForm.title_two);
+      formData.append("title", form.title || "");
+      formData.append("subtitle", form.subtitle || "");
+      formData.append("description", form.description || "");
+      formData.append("is_active", form.isActive ? "1" : "0");
 
-      if (sectionThreeForm.description) {
-        formData.append("description", sectionThreeForm.description);
+      if (form.imageFile) {
+        formData.append("image", form.imageFile);
       }
-
-      if (sectionThreeForm.imageFile) {
-        formData.append("image", sectionThreeForm.imageFile);
-      }
-
-      const isUpdate = Boolean(sectionThreeForm.id);
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/home-section-threes/${sectionThreeForm.id}`
-        : `${API_BASE_URL}/home-section-threes`;
 
       if (isUpdate) {
         formData.append("_method", "PUT");
@@ -812,41 +1407,294 @@ export default function PageEdit() {
       if (!response.ok) {
         const message = getErrorMessage(
           data,
-          ["title_one", "title_two", "description", "image"],
-          "Failed to save Home Section Three."
+          ["title", "subtitle", "description", "image", "is_active"],
+          "Failed to save Home Section One."
         );
 
         throw new Error(message);
       }
 
-      const item = data?.data || data;
-      const imageValue = getImageValue(item);
+      const formatted = formatHomeSectionOne(data?.data || data);
 
-      const formatted = {
-        id: item.id,
-        title_one: item.title_one || "",
-        title_two: item.title_two || "",
-        description: item.description || "",
-        image: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setSectionThreeForm(formatted);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      setForm(emptyGenericForm);
+      showSavedSuccess();
     } catch (err) {
-      setError(err.message || "Something went wrong while saving.");
+      setError(err.message || "Something went wrong while saving Home Section One.");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleGenericSave = () => {
+    setSaving(true);
+
+    const allSections = loadSections();
+    const { imageFile, ...safeForm } = form;
+
+    const genericPayload = isHomeSectionTwo
+      ? {
+          id: safeForm.id || null,
+          title: safeForm.title || "",
+          subtitle: safeForm.subtitle || "",
+          description: safeForm.description || "",
+          image: safeForm.image || "",
+          image_url: safeForm.image_url || "",
+          imageUrl: safeForm.imageUrl || safeForm.imagePreview || "",
+          imagePreview: safeForm.imagePreview || safeForm.imageUrl || "",
+          isActive: safeForm.isActive,
+        }
+      : safeForm;
+
+    const updatedSection = {
+      ...genericPayload,
+      sectionId: currentSection.id,
+      sectionSlug: currentSection.slug,
+      sectionName: currentSection.title,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedSections = {
+      ...allSections,
+      [currentSection.slug]: updatedSection,
+    };
+
+    saveSections(updatedSections);
+
+    setSavedData(updatedSection);
+    setForm(emptyGenericForm);
+    setSaving(false);
+    showSavedSuccess();
+  };
+
+  const saveSingleWelcomeSlide = async ({ file, isUpdate, draft = null }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const activeSlide = draft || welcomeSlideForm;
+
+    const url = isUpdate
+      ? `${API_BASE_URL}/admin/welcome-slides/${welcomeSlideForm.id}`
+      : `${API_BASE_URL}/admin/welcome-slides`;
+
+    const formData = new FormData();
+
+    formData.append("title", activeSlide.title || "");
+    formData.append("subtitle", activeSlide.subtitle || "");
+
+    if (activeSlide.description) {
+      formData.append("description", activeSlide.description);
+    }
+
+    if (activeSlide.button_text) {
+      formData.append("button_text", activeSlide.button_text);
+    }
+
+    if (activeSlide.button_link) {
+      formData.append("button_link", activeSlide.button_link);
+    }
+
+    formData.append("sort_order", activeSlide.sort_order || 0);
+    formData.append("is_active", activeSlide.is_active ? "1" : "0");
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        [
+          "title",
+          "subtitle",
+          "description",
+          "button_text",
+          "button_link",
+          "image",
+          "sort_order",
+          "is_active",
+        ],
+        "Failed to save Welcome Slide."
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
+  };
+
+  const handleWelcomeSlideSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const isUpdate = Boolean(welcomeSlideForm.id);
+      const slideDrafts = welcomeSlideForm.slideDrafts || [];
+
+      if (isUpdate) {
+        if (!welcomeSlideForm.title.trim()) {
+          throw new Error("Please enter the slide title.");
+        }
+
+        await saveSingleWelcomeSlide({
+          file: welcomeSlideForm.imageFile,
+          isUpdate: true,
+        });
+      } else {
+        if (!slideDrafts.length) {
+          throw new Error("Please upload at least one welcome image first.");
+        }
+
+        const missingTitleIndex = slideDrafts.findIndex(
+          (draft) => !draft.title?.trim()
+        );
+
+        if (missingTitleIndex !== -1) {
+          throw new Error(
+            `Please enter a title for welcome image #${missingTitleIndex + 1}.`
+          );
+        }
+
+        for (const draft of slideDrafts) {
+          await saveSingleWelcomeSlide({
+            file: draft.file,
+            isUpdate: false,
+            draft,
+          });
+        }
+      }
+
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+      await fetchWelcomeSlides();
+
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving welcome slide.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSingleSectionThreeSlide = async ({ file, isUpdate, draft = null }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const activeSlide = draft || sectionThreeForm;
+    const url = isUpdate
+      ? `${API_BASE_URL}/home-section-threes/${sectionThreeForm.id}`
+      : `${API_BASE_URL}/home-section-threes`;
+
+    const formData = new FormData();
+
+    formData.append("title_one", activeSlide.title_one || "");
+    formData.append("title_two", activeSlide.title_two || "");
+    formData.append("description", activeSlide.description || "");
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        ["title_one", "title_two", "description", "image"],
+        "Failed to save Home Section Three slide."
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
+  };
+
+  const handleSectionThreeSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      const isUpdate = Boolean(sectionThreeForm.id);
+      const slideDrafts = sectionThreeForm.slideDrafts || [];
+
+      if (isUpdate) {
+        if (!sectionThreeForm.title_one.trim()) {
+          throw new Error("Please enter the slide title line one.");
+        }
+
+        await saveSingleSectionThreeSlide({
+          file: sectionThreeForm.imageFile,
+          isUpdate: true,
+        });
+      } else {
+        if (!slideDrafts.length) {
+          throw new Error("Please upload at least one Home Section Three image first.");
+        }
+
+        const missingTitleIndex = slideDrafts.findIndex(
+          (draft) => !draft.title_one?.trim()
+        );
+
+        if (missingTitleIndex !== -1) {
+          throw new Error(
+            `Please enter title line one for section image #${missingTitleIndex + 1}.`
+          );
+        }
+
+        for (const draft of slideDrafts) {
+          await saveSingleSectionThreeSlide({
+            file: draft.file,
+            isUpdate: false,
+            draft,
+          });
+        }
+      }
+
+      setSectionThreeForm(emptySectionThreeForm);
+      await fetchSectionThree();
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving Home Section Three.");
+    } finally {
+      setSaving(false);
+    }
+  };
   const handleSectionFourSave = async () => {
     try {
       setSaving(true);
@@ -935,13 +1783,9 @@ export default function PageEdit() {
         updatedAt: new Date().toISOString(),
       };
 
-      setSectionFourForm(formatted);
+      setSectionFourForm(emptySectionFourForm);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving.");
     } finally {
@@ -1043,18 +1887,68 @@ export default function PageEdit() {
         updatedAt: new Date().toISOString(),
       };
 
-      setSectionFiveForm(formatted);
+      setSectionFiveForm(emptySectionFiveForm);
       setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while saving.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveSingleSectionSixImage = async ({ file, isUpdate, displayOrder = null, isActive = null }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const url = isUpdate
+      ? `${API_BASE_URL}/admin/section6/gallery/${sectionSixForm.id}`
+      : `${API_BASE_URL}/admin/section6/gallery`;
+
+    const formData = new FormData();
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    const finalDisplayOrder = displayOrder !== null ? displayOrder : sectionSixForm.display_order;
+
+    if (finalDisplayOrder !== "" && finalDisplayOrder !== null && finalDisplayOrder !== undefined) {
+      formData.append("display_order", finalDisplayOrder);
+    }
+
+    const finalIsActive = isActive !== null ? isActive : sectionSixForm.is_active;
+    formData.append("is_active", finalIsActive ? "1" : "0");
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        ["image", "display_order", "is_active"],
+        "Failed to save Section 6 Gallery image."
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
   };
 
   const handleSectionSixSave = async () => {
@@ -1063,69 +1957,285 @@ export default function PageEdit() {
       setError("");
       setSavedMessage(false);
 
+      const isUpdate = Boolean(sectionSixForm.id);
+      const imageDrafts = sectionSixForm.imageDrafts || [];
+
+      if (isUpdate) {
+        if (!sectionSixForm.imageFile && !sectionSixForm.id) {
+          throw new Error("Please upload a gallery image first.");
+        }
+
+        await saveSingleSectionSixImage({
+          file: sectionSixForm.imageFile,
+          isUpdate: true,
+        });
+      } else {
+        if (!imageDrafts.length) {
+          throw new Error("Please select one or more gallery images first.");
+        }
+
+        for (const [index, draft] of imageDrafts.entries()) {
+          await saveSingleSectionSixImage({
+            file: draft.file,
+            isUpdate: false,
+            displayOrder: draft.display_order ?? index + 1,
+            isActive: draft.is_active ?? true,
+          });
+        }
+      }
+
+      setSectionSixForm(emptySectionSixForm);
+      await fetchSectionSix();
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while saving gallery.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSingleUrlContentImage = async ({ sectionName, file, isUpdate, draft = null }) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error("You are not logged in. Please login again.");
+    }
+
+    const adminPath = getAdminPath(sectionName);
+    const activeForm = draft || getUrlContentFormBySection(sectionName);
+    const currentId = activeForm.id;
+    const url = isUpdate
+      ? `${API_BASE_URL}/${adminPath}/${currentId}`
+      : `${API_BASE_URL}/${adminPath}`;
+
+    const formData = new FormData();
+
+    formData.append("title", activeForm.title || "");
+    formData.append("subtitle", activeForm.subtitle || "");
+    formData.append("description", activeForm.description || "");
+
+    if (activeForm.sort_order !== "" && activeForm.sort_order !== null && activeForm.sort_order !== undefined) {
+      formData.append("sort_order", activeForm.sort_order);
+    }
+
+    if (activeForm.is_active !== undefined && activeForm.is_active !== null) {
+      formData.append("is_active", activeForm.is_active ? "1" : "0");
+    }
+
+    if (file) {
+      formData.append("image", file);
+    }
+
+    if (isUpdate) {
+      formData.append("_method", "PUT");
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = getErrorMessage(
+        data,
+        ["title", "subtitle", "description", "image"],
+        `Failed to save ${getSectionTitle(sectionName)}.`
+      );
+
+      throw new Error(message);
+    }
+
+    return data;
+  };
+
+  const handleUrlContentSave = async (sectionName) => {
+    try {
+      setSaving(true);
+      setError("");
+      setSavedMessage(false);
+
+      if (isMultiUrlContentSection(sectionName)) {
+        const activeForm = getUrlContentFormBySection(sectionName);
+        const sectionLabel = getUrlContentLabel(sectionName).toLowerCase();
+        const isUpdate = Boolean(activeForm.id);
+        const slideDrafts = activeForm.slideDrafts || [];
+
+        if (isUpdate) {
+          if (!activeForm.title.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image title.`);
+          }
+
+          if (!activeForm.subtitle.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image subtitle.`);
+          }
+
+          if (!activeForm.description.trim()) {
+            throw new Error(`Please enter the ${sectionLabel} image description.`);
+          }
+
+          await saveSingleUrlContentImage({
+            sectionName,
+            file: activeForm.imageFile,
+            isUpdate: true,
+          });
+        } else {
+          if (!slideDrafts.length) {
+            throw new Error(`Please upload at least one ${sectionLabel} image first.`);
+          }
+
+          const missingTitleIndex = slideDrafts.findIndex(
+            (draft) => !draft.title?.trim()
+          );
+
+          if (missingTitleIndex !== -1) {
+            throw new Error(
+              `Please enter a title for ${sectionLabel} image #${missingTitleIndex + 1}.`
+            );
+          }
+
+          const missingSubtitleIndex = slideDrafts.findIndex(
+            (draft) => !draft.subtitle?.trim()
+          );
+
+          if (missingSubtitleIndex !== -1) {
+            throw new Error(
+              `Please enter a subtitle for ${sectionLabel} image #${missingSubtitleIndex + 1}.`
+            );
+          }
+
+          const missingDescriptionIndex = slideDrafts.findIndex(
+            (draft) => !draft.description?.trim()
+          );
+
+          if (missingDescriptionIndex !== -1) {
+            throw new Error(
+              `Please enter a description for ${sectionLabel} image #${missingDescriptionIndex + 1}.`
+            );
+          }
+
+          for (const draft of slideDrafts) {
+            await saveSingleUrlContentImage({
+              sectionName,
+              file: draft.file,
+              isUpdate: false,
+              draft,
+            });
+          }
+        }
+
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+        await fetchUrlContentSection(sectionName);
+        showSavedSuccess();
+        return;
+      }
+
+      const activeForm = getUrlContentFormBySection(sectionName);
+      const isUpdate = Boolean(activeForm.id);
+
+      if (!activeForm.imageFile && !isUpdate) {
+        throw new Error("Please upload an image first.");
+      }
+
+      const data = await saveSingleUrlContentImage({
+        sectionName,
+        file: activeForm.imageFile,
+        isUpdate,
+      });
+
+      const item = data?.data || data;
+      const imageValue = getImageValue(item);
+
+      const formatted = {
+        id: item.id,
+        title: item.title || "",
+        subtitle: item.subtitle || "",
+        description: item.description || "",
+        image: imageValue,
+        image_url: imageValue,
+        imageFile: null,
+        imagePreview: buildImageUrl(imageValue),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setUrlContentFormBySection(sectionName, emptyUrlContentForm);
+      setSavedData(formatted);
+      showSavedSuccess();
+    } catch (err) {
+      setError(
+        err.message ||
+          `Something went wrong while saving ${getSectionTitle(sectionName)}.`
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleWelcomeSlideEdit = (slide) => {
+    const imageValue = getImageValue(slide);
+
+    setWelcomeSlideForm({
+      id: slide.id,
+      title: slide.title || "",
+      subtitle: slide.subtitle || "",
+      description: slide.description || "",
+      button_text: slide.button_text || "",
+      button_link: slide.button_link || "",
+      image: imageValue,
+      image_url: imageValue,
+      imageFile: null,
+      imageFiles: [],
+      imagePreview: buildImageUrl(imageValue),
+      imagePreviews: [],
+      sort_order: slide.sort_order ?? 0,
+      is_active: toBoolean(slide.is_active),
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleWelcomeSlideDelete = async (slideId) => {
+    if (!confirm("Delete this welcome slide?")) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
       const token = getToken();
 
       if (!token) {
         throw new Error("You are not logged in. Please login again.");
       }
 
-      if (!sectionSixForm.imageFile && !sectionSixForm.id) {
-        throw new Error("Please upload a gallery image first.");
-      }
-
-      const isUpdate = Boolean(sectionSixForm.id);
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/section-6-gallery/${sectionSixForm.id}`
-        : `${API_BASE_URL}/section-6-gallery`;
-
-      const formData = new FormData();
-
-      if (sectionSixForm.imageFile) {
-        formData.append("image", sectionSixForm.imageFile);
-      }
-
-      if (sectionSixForm.display_order !== "") {
-        formData.append("display_order", sectionSixForm.display_order);
-      }
-
-      formData.append("is_active", sectionSixForm.is_active ? "1" : "0");
-
-      if (isUpdate) {
-        formData.append("_method", "PUT");
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/admin/welcome-slides/${slideId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        const message = getErrorMessage(
-          data,
-          ["image", "display_order", "is_active"],
-          "Failed to save Section 6 Gallery image."
-        );
-
-        throw new Error(message);
+        throw new Error(data?.message || "Failed to delete welcome slide.");
       }
 
-      setSectionSixForm(emptySectionSixForm);
-      await fetchSectionSix();
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+      await fetchWelcomeSlides();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
-      setError(err.message || "Something went wrong while saving gallery.");
+      setError(err.message || "Something went wrong while deleting welcome slide.");
     } finally {
       setSaving(false);
     }
@@ -1162,7 +2272,7 @@ export default function PageEdit() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/section-6-gallery/${imageId}`,
+        `${API_BASE_URL}/admin/section6/gallery/${imageId}`,
         {
           method: "DELETE",
           headers: {
@@ -1181,11 +2291,7 @@ export default function PageEdit() {
       setSectionSixForm(emptySectionSixForm);
       await fetchSectionSix();
 
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      showSavedSuccess();
     } catch (err) {
       setError(err.message || "Something went wrong while deleting image.");
     } finally {
@@ -1193,11 +2299,30 @@ export default function PageEdit() {
     }
   };
 
-  const handleUrlContentSave = async (sectionName) => {
+
+  const handleHomeSectionOneEdit = () => {
+    if (!savedData) return;
+
+    setForm({
+      ...emptyGenericForm,
+      ...savedData,
+      imageFile: null,
+      imagePreview: savedData.imagePreview || savedData.imageUrl || "",
+      imageUrl: savedData.imageUrl || savedData.imagePreview || "",
+      isActive: savedData.isActive ?? true,
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleHomeSectionOneDelete = async () => {
+    if (!savedData?.id) return;
+    if (!confirm("Delete Home Section One content?")) return;
+
     try {
       setSaving(true);
       setError("");
-      setSavedMessage(false);
 
       const token = getToken();
 
@@ -1205,94 +2330,230 @@ export default function PageEdit() {
         throw new Error("You are not logged in. Please login again.");
       }
 
-      const activeForm =
-        sectionName === "fitness" ? sectionSevenForm : sectionEightForm;
-
-      const basePath =
-        sectionName === "fitness" ? "section-7-fitness" : "section-8-parking";
-
-      const isUpdate = Boolean(activeForm.id);
-
-      if (!activeForm.imageFile && !isUpdate) {
-        throw new Error("Please upload an image first.");
-      }
-
-      const url = isUpdate
-        ? `${API_BASE_URL}/${basePath}/${activeForm.id}`
-        : `${API_BASE_URL}/${basePath}`;
-
-      const formData = new FormData();
-
-      formData.append("title", activeForm.title);
-      formData.append("subtitle", activeForm.subtitle);
-      formData.append("description", activeForm.description);
-
-      if (activeForm.imageFile) {
-        formData.append("image", activeForm.imageFile);
-      }
-
-      if (isUpdate) {
-        formData.append("_method", "PUT");
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/admin/home-section-one/${savedData.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        const message = getErrorMessage(
-          data,
-          ["title", "subtitle", "description", "image"],
-          `Failed to save ${
-            sectionName === "fitness" ? "Section 7 Fitness" : "Section 8 Parking"
-          }.`
-        );
-
-        throw new Error(message);
+        throw new Error(data?.message || "Failed to delete Home Section One.");
       }
 
-      const item = data?.data || data;
-      const imageValue = getImageValue(item);
-
-      const formatted = {
-        id: item.id,
-        title: item.title || "",
-        subtitle: item.subtitle || "",
-        description: item.description || "",
-        image: imageValue,
-        image_url: imageValue,
-        imageFile: null,
-        imagePreview: buildImageUrl(imageValue),
-        updatedAt: new Date().toISOString(),
-      };
-
-      if (sectionName === "fitness") {
-        setSectionSevenForm(formatted);
-      } else {
-        setSectionEightForm(formatted);
-      }
-
-      setSavedData(formatted);
-      setSavedMessage(true);
-
-      setTimeout(() => {
-        setSavedMessage(false);
-      }, 2500);
+      setForm(emptyGenericForm);
+      setSavedData(null);
+      showSavedSuccess();
     } catch (err) {
-      setError(err.message || "Something went wrong while saving content.");
+      setError(err.message || "Something went wrong while deleting Home Section One.");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSingleSectionEdit = (sectionKey, data) => {
+    if (!data) return;
+
+    if (sectionKey === "section-three") {
+      setSectionThreeForm({
+        ...emptySectionThreeForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+      });
+    }
+
+    if (sectionKey === "section-four") {
+      setSectionFourForm({
+        ...emptySectionFourForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+        is_active: toBoolean(data.is_active),
+      });
+    }
+
+    if (sectionKey === "section-five") {
+      setSectionFiveForm({
+        ...emptySectionFiveForm,
+        ...data,
+        imageFile: null,
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+        is_active: toBoolean(data.is_active),
+      });
+    }
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleSingleSectionDelete = async (sectionKey, id) => {
+    if (!id) return;
+    if (!confirm("Delete this section content?")) return;
+
+    const endpointMap = {
+      "section-three": `home-section-threes/${id}`,
+      "section-four": `home-section-fours/${id}`,
+      "section-five": `home-section-fives/${id}`,
+    };
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/${endpointMap[sectionKey]}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to delete section content.");
+      }
+
+      if (sectionKey === "section-three") {
+        setSectionThreeForm(emptySectionThreeForm);
+        await fetchSectionThree();
+      } else {
+        if (sectionKey === "section-four") setSectionFourForm(emptySectionFourForm);
+        if (sectionKey === "section-five") setSectionFiveForm(emptySectionFiveForm);
+
+        setSavedData(null);
+      }
+
+      showSavedSuccess();
+    } catch (err) {
+      setError(err.message || "Something went wrong while deleting section content.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUrlContentEdit = (sectionName, data) => {
+    if (!data) return;
+
+    if (isMultiUrlContentSection(sectionName)) {
+      setUrlContentFormBySection(sectionName, {
+        ...emptySectionTenImageForm,
+        ...data,
+        imageFile: null,
+        imageFiles: [],
+        imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+        imagePreviews: [],
+        slideDrafts: [],
+      });
+
+      setSavedMessage(false);
+      setError("");
+      return;
+    }
+
+    setUrlContentFormBySection(sectionName, {
+      ...emptyUrlContentForm,
+      ...data,
+      imageFile: null,
+      imagePreview: data.imagePreview || buildImageUrl(data.image || data.image_url || ""),
+    });
+
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleUrlContentDelete = async (sectionName, id) => {
+    if (!id) return;
+    if (!confirm(`Delete ${getSectionTitle(sectionName)} content?`)) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("You are not logged in. Please login again.");
+      }
+
+      const adminPath = getAdminPath(sectionName);
+      const response = await fetch(`${API_BASE_URL}/${adminPath}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || `Failed to delete ${getSectionTitle(sectionName)}.`);
+      }
+
+      if (isMultiUrlContentSection(sectionName)) {
+        setUrlContentFormBySection(sectionName, emptySectionTenImageForm);
+        await fetchUrlContentSection(sectionName);
+      } else {
+        setUrlContentFormBySection(sectionName, emptyUrlContentForm);
+        setSavedData(null);
+      }
+      showSavedSuccess();
+    } catch (err) {
+      setError(
+        err.message ||
+          `Something went wrong while deleting ${getSectionTitle(sectionName)}.`
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGenericEdit = () => {
+    if (!savedData) return;
+
+    setForm(formatGenericStorageSection(savedData));
+    setSavedMessage(false);
+    setError("");
+  };
+
+  const handleGenericDelete = () => {
+    if (!savedData) return;
+    if (!confirm("Delete this section content?")) return;
+
+    const allSections = loadSections();
+    delete allSections[currentSection.slug];
+    saveSections(allSections);
+
+    setForm(emptyGenericForm);
+    setSavedData(null);
+    showSavedSuccess();
+  };
+
   const handleSave = () => {
+    if (isWelcomeSection) {
+      handleWelcomeSlideSave();
+      return;
+    }
+
+    if (isHomeSectionOne) {
+      handleHomeSectionOneSave();
+      return;
+    }
+
     if (isSectionThree) {
       handleSectionThreeSave();
       return;
@@ -1323,51 +2584,56 @@ export default function PageEdit() {
       return;
     }
 
+    if (isSectionNine) {
+      handleUrlContentSave("restaurant-bar");
+      return;
+    }
+
+    if (isSectionTen) {
+      handleUrlContentSave("sauna");
+      return;
+    }
+
+    if (isSectionEleven) {
+      handleUrlContentSave("pool");
+      return;
+    }
+
+    if (isSectionTwelve) {
+      handleUrlContentSave("family-kids");
+      return;
+    }
+
     handleGenericSave();
   };
 
   const handleClear = () => {
     if (!confirm("Clear this section form?")) return;
 
-    if (isSectionThree) {
-      setSectionThreeForm((prev) => ({
-        ...emptySectionThreeForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+    if (isWelcomeSection) {
+      setWelcomeSlideForm(emptyWelcomeSlideForm);
+    } else if (isHomeSectionOne) {
+      setForm(emptyGenericForm);
+    } else if (isSectionThree) {
+      setSectionThreeForm(emptySectionThreeForm);
     } else if (isSectionFour) {
-      setSectionFourForm((prev) => ({
-        ...emptySectionFourForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionFourForm(emptySectionFourForm);
     } else if (isSectionFive) {
-      setSectionFiveForm((prev) => ({
-        ...emptySectionFiveForm,
-        id: prev.id,
-        image: prev.image,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionFiveForm(emptySectionFiveForm);
     } else if (isSectionSix) {
       setSectionSixForm(emptySectionSixForm);
     } else if (isSectionSeven) {
-      setSectionSevenForm((prev) => ({
-        ...emptyUrlContentForm,
-        id: prev.id,
-        image: prev.image,
-        image_url: prev.image_url,
-        imagePreview: prev.imagePreview,
-      }));
+      setSectionSevenForm(emptySectionTenImageForm);
     } else if (isSectionEight) {
-      setSectionEightForm((prev) => ({
-        ...emptyUrlContentForm,
-        id: prev.id,
-        image: prev.image,
-        image_url: prev.image_url,
-        imagePreview: prev.imagePreview,
-      }));
+      setUrlContentFormBySection("parking", emptySectionTenImageForm);
+    } else if (isSectionNine) {
+      setUrlContentFormBySection("restaurant-bar", emptySectionTenImageForm);
+    } else if (isSectionTen) {
+      setSectionTenForm(emptySectionTenImageForm);
+    } else if (isSectionEleven) {
+      keepUrlImageOnClear("pool");
+    } else if (isSectionTwelve) {
+      setUrlContentFormBySection("family-kids", emptySectionTenImageForm);
     } else {
       setForm(emptyGenericForm);
     }
@@ -1376,39 +2642,294 @@ export default function PageEdit() {
     setError("");
   };
 
-  const renderSectionThreeForm = () => {
+  const keepUrlImageOnClear = (sectionName) => {
+    setUrlContentFormBySection(sectionName, emptyUrlContentForm);
+  };
+
+  const renderWelcomeSlideForm = () => {
+    const selectedDrafts = welcomeSlideForm.slideDrafts || [];
+
     return (
       <div className="space-y-5">
-        <InputField
-          label="Title One"
-          value={sectionThreeForm.title_one}
-          onChange={(value) => updateSectionThreeField("title_one", value)}
-          placeholder="Enter first title"
-        />
+        {welcomeSlideForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing welcome slide #{welcomeSlideForm.id}. Click “Clear Form” to
+            add new slides instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more welcome images. After upload, add a different
+            title and subtitle for each image.
+          </div>
+        )}
 
-        <InputField
-          label="Title Two"
-          value={sectionThreeForm.title_two}
-          onChange={(value) => updateSectionThreeField("title_two", value)}
-          placeholder="Enter second title"
-        />
+        {welcomeSlideForm.id && (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Title"
+                value={welcomeSlideForm.title}
+                onChange={(value) => updateWelcomeSlideField("title", value)}
+                placeholder="Enter welcome title"
+              />
 
-        <TextareaField
-          label="Description"
-          value={sectionThreeForm.description}
-          onChange={(value) => updateSectionThreeField("description", value)}
-          placeholder="Enter section description"
-        />
+              <InputField
+                label="Subtitle"
+                value={welcomeSlideForm.subtitle}
+                onChange={(value) => updateWelcomeSlideField("subtitle", value)}
+                placeholder="Enter welcome subtitle"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Sort Order"
+                type="number"
+                value={welcomeSlideForm.sort_order}
+                onChange={(value) => updateWelcomeSlideField("sort_order", value)}
+                placeholder="Example: 1"
+              />
+
+              <ActiveToggle
+                label="Active Slide"
+                checked={welcomeSlideForm.is_active}
+                onChange={(value) => updateWelcomeSlideField("is_active", value)}
+              />
+            </div>
+          </>
+        )}
 
         <ImageUploadField
-          preview={sectionThreeForm.imagePreview}
-          onChange={handleSectionThreeImageChange}
-          maxText="JPG, JPEG, PNG, WEBP. Max 2MB."
+          multiple={!welcomeSlideForm.id}
+          preview={welcomeSlideForm.imagePreview}
+          previews={welcomeSlideForm.id ? [] : welcomeSlideForm.imagePreviews}
+          onChange={handleWelcomeSlideImageChange}
+          maxText={
+            welcomeSlideForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
         />
+
+        {!welcomeSlideForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected welcome images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Each image will be saved as its own slide with its own title
+                and subtitle.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Welcome slide draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Welcome Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeWelcomeSlideDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Image Title"
+                      value={draft.title}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "title", value)
+                      }
+                      placeholder="Example: Unforgettable"
+                    />
+
+                    <InputField
+                      label="Image Subtitle"
+                      value={draft.subtitle}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "subtitle", value)
+                      }
+                      placeholder="Example: Charm & Adventure"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Sort Order"
+                      type="number"
+                      value={draft.sort_order}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "sort_order", value)
+                      }
+                      placeholder="1"
+                    />
+
+                    <ActiveToggle
+                      label="Active Slide"
+                      checked={draft.is_active}
+                      onChange={(value) =>
+                        updateWelcomeSlideDraft(index, "is_active", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
+  const renderSectionThreeForm = () => {
+    const selectedDrafts = sectionThreeForm.slideDrafts || [];
+
+    return (
+      <div className="space-y-5">
+        {sectionThreeForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing Home Section Three slide #{sectionThreeForm.id}. Click “Clear Form” to add new slides instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more images. Each image will have its own title and description.
+          </div>
+        )}
+
+        {sectionThreeForm.id && (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Title Line One"
+                value={sectionThreeForm.title_one}
+                onChange={(value) => updateSectionThreeField("title_one", value)}
+                placeholder="Example: Unforgettable"
+              />
+
+              <InputField
+                label="Title Line Two"
+                value={sectionThreeForm.title_two}
+                onChange={(value) => updateSectionThreeField("title_two", value)}
+                placeholder="Example: Weddings"
+              />
+            </div>
+
+            <TextareaField
+              label="Description"
+              value={sectionThreeForm.description}
+              onChange={(value) => updateSectionThreeField("description", value)}
+              placeholder="Enter slide description"
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!sectionThreeForm.id}
+          preview={sectionThreeForm.imagePreview}
+          previews={sectionThreeForm.id ? [] : sectionThreeForm.imagePreviews}
+          onChange={handleSectionThreeImageChange}
+          maxText={
+            sectionThreeForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!sectionThreeForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected Home Section Three images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add a title and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Home Section Three draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Section Three Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSectionThreeDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <InputField
+                      label="Title Line One"
+                      value={draft.title_one}
+                      onChange={(value) =>
+                        updateSectionThreeDraft(index, "title_one", value)
+                      }
+                      placeholder="Example: Unforgettable"
+                    />
+
+                    <InputField
+                      label="Title Line Two"
+                      value={draft.title_two}
+                      onChange={(value) =>
+                        updateSectionThreeDraft(index, "title_two", value)
+                      }
+                      placeholder="Example: Weddings"
+                    />
+                  </div>
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) =>
+                      updateSectionThreeDraft(index, "description", value)
+                    }
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   const renderSectionFourForm = () => {
     return (
       <div className="space-y-5">
@@ -1528,16 +3049,18 @@ export default function PageEdit() {
   };
 
   const renderSectionSixForm = () => {
+    const selectedDrafts = sectionSixForm.imageDrafts || [];
+
     return (
       <div className="space-y-5">
         {sectionSixForm.id ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Editing gallery image #{sectionSixForm.id}. Click “Clear Form” to
-            add a new image instead.
+            add new images instead.
           </div>
         ) : (
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            Upload a new gallery image. Saved images will appear on the right.
+            Select one or more gallery photos. No title or description is needed.
           </div>
         )}
 
@@ -1546,7 +3069,7 @@ export default function PageEdit() {
           type="number"
           value={sectionSixForm.display_order}
           onChange={(value) => updateSectionSixField("display_order", value)}
-          placeholder="Example: 1"
+          placeholder="Optional"
         />
 
         <ActiveToggle
@@ -1556,17 +3079,432 @@ export default function PageEdit() {
         />
 
         <ImageUploadField
+          multiple={!sectionSixForm.id}
           preview={sectionSixForm.imagePreview}
+          previews={sectionSixForm.id ? [] : sectionSixForm.imagePreviews}
           onChange={handleSectionSixImageChange}
-          maxText="JPG, JPEG, PNG, WEBP."
+          maxText={
+            sectionSixForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple photos allowed."
+          }
         />
+
+        {!sectionSixForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected gallery photos
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                These photos will be saved as separate gallery images.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {selectedDrafts.map((draft, index) => (
+                <div
+                  key={`${draft.preview}-${index}`}
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                >
+                  <img
+                    src={draft.preview}
+                    alt={`Gallery draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+
+                  <div className="p-3">
+                    <div className="mb-2 text-xs font-bold text-slate-700">
+                      Gallery Photo #{index + 1}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeSectionSixDraft(index)}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderMultiUrlContentForm = (sectionName, label, titlePlaceholder, subtitlePlaceholder) => {
+    const activeForm = getUrlContentFormBySection(sectionName);
+    const selectedDrafts = activeForm.slideDrafts || [];
+    const removeDraft = (index) => removeUrlContentDraft(sectionName, index);
+    const updateDraft = (index, field, value) =>
+      updateUrlContentDraft(sectionName, index, field, value);
+
+    return (
+      <div className="space-y-5">
+        {activeForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing {label} image #{activeForm.id}. Click “Clear Form” to add new images instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more {label.toLowerCase()} images. Each image will have its own title, subtitle, and description.
+          </div>
+        )}
+
+        {activeForm.id && (
+          <>
+            <InputField
+              label="Title"
+              value={activeForm.title}
+              onChange={(value) => updateUrlContentField(sectionName, "title", value)}
+              placeholder={titlePlaceholder || `Enter ${label.toLowerCase()} image title`}
+            />
+
+            <InputField
+              label="Subtitle"
+              value={activeForm.subtitle}
+              onChange={(value) => updateUrlContentField(sectionName, "subtitle", value)}
+              placeholder={subtitlePlaceholder || `Enter ${label.toLowerCase()} image subtitle`}
+            />
+
+            <TextareaField
+              label="Description"
+              value={activeForm.description}
+              onChange={(value) => updateUrlContentField(sectionName, "description", value)}
+              placeholder={`Enter ${label.toLowerCase()} image description`}
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!activeForm.id}
+          preview={activeForm.imagePreview}
+          previews={activeForm.id ? [] : activeForm.imagePreviews}
+          onChange={(e) => handleUrlContentImageChange(sectionName, e)}
+          maxText={
+            activeForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!activeForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected {label.toLowerCase()} images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title, subtitle, and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`${label} draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      {label} Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateDraft(index, "title", value)}
+                    placeholder={titlePlaceholder || `Enter ${label.toLowerCase()} title`}
+                  />
+
+                  <InputField
+                    label="Subtitle"
+                    value={draft.subtitle}
+                    onChange={(value) => updateDraft(index, "subtitle", value)}
+                    placeholder={subtitlePlaceholder || `Enter ${label.toLowerCase()} subtitle`}
+                  />
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) => updateDraft(index, "description", value)}
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSectionSevenForm = () => {
+    const selectedDrafts = sectionSevenForm.slideDrafts || [];
+
+    return (
+      <div className="space-y-5">
+        {sectionSevenForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing fitness image #{sectionSevenForm.id}. Click “Clear Form” to add new images instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more fitness images. Each image will have its own title, subtitle, and description.
+          </div>
+        )}
+
+        {sectionSevenForm.id && (
+          <>
+            <InputField
+              label="Title"
+              value={sectionSevenForm.title}
+              onChange={(value) => updateUrlContentField("fitness", "title", value)}
+              placeholder="Enter fitness image title"
+            />
+
+            <InputField
+              label="Subtitle"
+              value={sectionSevenForm.subtitle}
+              onChange={(value) => updateUrlContentField("fitness", "subtitle", value)}
+              placeholder="Enter fitness image subtitle"
+            />
+
+            <TextareaField
+              label="Description"
+              value={sectionSevenForm.description}
+              onChange={(value) => updateUrlContentField("fitness", "description", value)}
+              placeholder="Enter fitness image description"
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!sectionSevenForm.id}
+          preview={sectionSevenForm.imagePreview}
+          previews={sectionSevenForm.id ? [] : sectionSevenForm.imagePreviews}
+          onChange={(e) => handleUrlContentImageChange("fitness", e)}
+          maxText={
+            sectionSevenForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!sectionSevenForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected fitness images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title, subtitle, and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Fitness draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Fitness Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSectionSevenDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateSectionSevenDraft(index, "title", value)}
+                    placeholder="Example: Modern Fitness Center"
+                  />
+
+                  <InputField
+                    label="Subtitle"
+                    value={draft.subtitle}
+                    onChange={(value) => updateSectionSevenDraft(index, "subtitle", value)}
+                    placeholder="Example: Wellness and strength"
+                  />
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) => updateSectionSevenDraft(index, "description", value)}
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSectionTenForm = () => {
+    const selectedDrafts = sectionTenForm.slideDrafts || [];
+
+    return (
+      <div className="space-y-5">
+        {sectionTenForm.id ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Editing sauna image #{sectionTenForm.id}. Click “Clear Form” to add new images instead.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Upload one or more sauna images. Each image will have its own title, subtitle, and description.
+          </div>
+        )}
+
+        {sectionTenForm.id && (
+          <>
+            <InputField
+              label="Title"
+              value={sectionTenForm.title}
+              onChange={(value) => updateUrlContentField("sauna", "title", value)}
+              placeholder="Enter sauna image title"
+            />
+
+            <InputField
+              label="Subtitle"
+              value={sectionTenForm.subtitle}
+              onChange={(value) => updateUrlContentField("sauna", "subtitle", value)}
+              placeholder="Enter sauna image subtitle"
+            />
+
+            <TextareaField
+              label="Description"
+              value={sectionTenForm.description}
+              onChange={(value) => updateUrlContentField("sauna", "description", value)}
+              placeholder="Enter sauna image description"
+            />
+          </>
+        )}
+
+        <ImageUploadField
+          multiple={!sectionTenForm.id}
+          preview={sectionTenForm.imagePreview}
+          previews={sectionTenForm.id ? [] : sectionTenForm.imagePreviews}
+          onChange={(e) => handleUrlContentImageChange("sauna", e)}
+          maxText={
+            sectionTenForm.id
+              ? "JPG, JPEG, PNG, WEBP."
+              : "JPG, JPEG, PNG, WEBP. Multiple images allowed."
+          }
+        />
+
+        {!sectionTenForm.id && selectedDrafts.length > 0 && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Selected sauna images
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Add title, subtitle, and description for each image before saving.
+              </p>
+            </div>
+
+            {selectedDrafts.map((draft, index) => (
+              <div
+                key={`${draft.preview}-${index}`}
+                className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+              >
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <img
+                    src={draft.preview}
+                    alt={`Sauna draft ${index + 1}`}
+                    className="h-36 w-full object-cover"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      Sauna Image #{index + 1}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeSectionTenDraft(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateSectionTenDraft(index, "title", value)}
+                    placeholder="Example: Relaxing Sauna"
+                  />
+
+                  <InputField
+                    label="Subtitle"
+                    value={draft.subtitle}
+                    onChange={(value) => updateSectionTenDraft(index, "subtitle", value)}
+                    placeholder="Example: Wellness and calm"
+                  />
+
+                  <TextareaField
+                    label="Description"
+                    value={draft.description}
+                    onChange={(value) => updateSectionTenDraft(index, "description", value)}
+                    placeholder="Enter image description"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   const renderUrlContentForm = (
     activeForm,
-    updateField,
+    sectionName,
     labelPrefix,
     onImageChange
   ) => {
@@ -1575,21 +3513,25 @@ export default function PageEdit() {
         <InputField
           label="Title"
           value={activeForm.title}
-          onChange={(value) => updateField("title", value)}
+          onChange={(value) => updateUrlContentField(sectionName, "title", value)}
           placeholder={`Enter ${labelPrefix} title`}
         />
 
         <InputField
           label="Subtitle"
           value={activeForm.subtitle}
-          onChange={(value) => updateField("subtitle", value)}
+          onChange={(value) =>
+            updateUrlContentField(sectionName, "subtitle", value)
+          }
           placeholder={`Enter ${labelPrefix} subtitle`}
         />
 
         <TextareaField
           label="Description"
           value={activeForm.description}
-          onChange={(value) => updateField("description", value)}
+          onChange={(value) =>
+            updateUrlContentField(sectionName, "description", value)
+          }
           placeholder={`Enter ${labelPrefix} description`}
         />
 
@@ -1626,31 +3568,41 @@ export default function PageEdit() {
           placeholder="Enter section description"
         />
 
-        <InputField
-          label="Image URL"
-          icon={Image}
-          type="url"
-          value={form.imageUrl}
-          onChange={(value) => updateGenericField("imageUrl", value)}
-          placeholder="https://example.com/image.jpg"
-        />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <InputField
-            label="Button Text"
-            value={form.buttonText}
-            onChange={(value) => updateGenericField("buttonText", value)}
-            placeholder="Example: Learn More"
+        {isHomeSectionOne || isHomeSectionTwo ? (
+          <ImageUploadField
+            preview={form.imagePreview || form.imageUrl}
+            onChange={handleGenericImageChange}
+            maxText="JPG, JPEG, PNG, WEBP. Upload image file, not URL."
           />
+        ) : (
+          <>
+            <InputField
+              label="Image URL"
+              icon={Image}
+              type="url"
+              value={form.imageUrl}
+              onChange={(value) => updateGenericField("imageUrl", value)}
+              placeholder="https://example.com/image.jpg"
+            />
 
-          <InputField
-            label="Button Link"
-            icon={Link2}
-            value={form.buttonLink}
-            onChange={(value) => updateGenericField("buttonLink", value)}
-            placeholder="Example: /rooms or #about"
-          />
-        </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <InputField
+                label="Button Text"
+                value={form.buttonText}
+                onChange={(value) => updateGenericField("buttonText", value)}
+                placeholder="Example: Learn More"
+              />
+
+              <InputField
+                label="Button Link"
+                icon={Link2}
+                value={form.buttonLink}
+                onChange={(value) => updateGenericField("buttonLink", value)}
+                placeholder="Example: /rooms or #about"
+              />
+            </div>
+          </>
+        )}
 
         <ActiveToggle
           label="Active Section"
@@ -1661,34 +3613,172 @@ export default function PageEdit() {
     );
   };
 
-  const renderSectionThreePreview = () => {
-    if (!savedData) {
-      return renderEmptyPreview("No saved section three content yet");
+  const renderWelcomeSlidePreview = () => {
+    if (!welcomeSlides.length) {
+      return renderEmptyPreview("No welcome slides saved yet");
     }
 
     return (
-      <PreviewCard image={savedData.imagePreview}>
-        <SectionBadge>{currentSection.title}</SectionBadge>
-
-        <h3 className="text-2xl font-bold leading-tight text-slate-900">
-          {savedData.title_one || "No title one saved"}
-        </h3>
-
-        <h4 className="text-lg font-semibold leading-tight text-amber-600">
-          {savedData.title_two || "No title two saved"}
-        </h4>
-
-        {savedData.description && (
-          <p className="text-sm leading-7 text-slate-600">
-            {savedData.description}
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Welcome Slides: {welcomeSlides.length}
           </p>
-        )}
+          <p className="mt-1 text-xs text-amber-700">
+            Click edit to update a welcome slide, or delete to remove it.
+          </p>
+        </div>
 
-        {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
-      </PreviewCard>
+        <div className="grid gap-4">
+          {welcomeSlides.map((slide) => (
+            <div
+              key={slide.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={slide.imagePreview}
+                  alt={slide.title || `Welcome slide ${slide.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <SectionBadge>Welcome #{slide.id}</SectionBadge>
+
+                  <StatusBadge active={toBoolean(slide.is_active)} />
+
+                  {slide.sort_order !== undefined && (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                      Sort: {slide.sort_order}
+                    </span>
+                  )}
+                </div>
+
+                {slide.subtitle && <EyebrowText>{slide.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {slide.title || "No title saved"}
+                </h3>
+
+                {slide.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {slide.description}
+                  </p>
+                )}
+
+                {slide.button_text && (
+                  <div className="pt-2">
+                    <span className="inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white">
+                      {slide.button_text}
+                    </span>
+
+                    {slide.button_link && (
+                      <p className="mt-2 text-xs text-slate-400">
+                        Link: {slide.button_link}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomeSlideEdit(slide)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomeSlideDelete(slide.id)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   };
 
+  const renderSectionThreePreview = () => {
+    if (!sectionThreeSlides.length) {
+      return renderEmptyPreview("No Home Section Three slides saved yet");
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Home Section Three Slides: {sectionThreeSlides.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Click edit to update one image, or delete to remove it.
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          {sectionThreeSlides.map((slide) => (
+            <div
+              key={slide.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={slide.imagePreview}
+                  alt={slide.title_one || `Home Section Three slide ${slide.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>Section Three #{slide.id}</SectionBadge>
+
+                <h3 className="text-2xl font-bold leading-tight text-slate-900">
+                  {slide.title_one || "No title line one saved"}
+                </h3>
+
+                {slide.title_two && (
+                  <h4 className="text-lg font-semibold leading-tight text-amber-600">
+                    {slide.title_two}
+                  </h4>
+                )}
+
+                {slide.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {slide.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleSingleSectionEdit("section-three", slide)}
+                  onDelete={() => handleSingleSectionDelete("section-three", slide.id)}
+                />
+
+                {slide.updatedAt && <UpdatedAt date={slide.updatedAt} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
   const renderSectionFourPreview = () => {
     if (!savedData) {
       return renderEmptyPreview("No saved section four slide yet");
@@ -1723,6 +3813,11 @@ export default function PageEdit() {
             {savedData.description}
           </p>
         )}
+
+        <PreviewActions
+          onEdit={() => handleSingleSectionEdit("section-four", savedData)}
+          onDelete={() => handleSingleSectionDelete("section-four", savedData.id)}
+        />
 
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
@@ -1768,6 +3863,11 @@ export default function PageEdit() {
             )}
           </div>
         )}
+
+        <PreviewActions
+          onEdit={() => handleSingleSectionEdit("section-five", savedData)}
+          onDelete={() => handleSingleSectionDelete("section-five", savedData.id)}
+        />
 
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
@@ -1848,7 +3948,192 @@ export default function PageEdit() {
     );
   };
 
-  const renderUrlContentPreview = (data, emptyTitle) => {
+  const renderMultiUrlContentPreview = (sectionName, label) => {
+    const images = getUrlContentImagesBySection(sectionName);
+
+    if (!images.length) {
+      return renderEmptyPreview(`No saved ${label.toLowerCase()} images yet`);
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved {label} Images: {images.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Each image can have its own title, subtitle, and description.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {images.map((image) => (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={image.imagePreview}
+                  alt={image.title || `${label} image ${image.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>{label} #{image.id}</SectionBadge>
+
+                {image.subtitle && <EyebrowText>{image.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {image.title || "No title saved"}
+                </h3>
+
+                {image.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {image.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleUrlContentEdit(sectionName, image)}
+                  onDelete={() => handleUrlContentDelete(sectionName, image.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSectionSevenPreview = () => {
+    if (!sectionSevenImages.length) {
+      return renderEmptyPreview("No saved fitness images yet");
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Fitness Images: {sectionSevenImages.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Each image can have its own title, subtitle, and description.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {sectionSevenImages.map((image) => (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={image.imagePreview}
+                  alt={image.title || `Fitness image ${image.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>Fitness #{image.id}</SectionBadge>
+
+                {image.subtitle && <EyebrowText>{image.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {image.title || "No title saved"}
+                </h3>
+
+                {image.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {image.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleUrlContentEdit("fitness", image)}
+                  onDelete={() => handleUrlContentDelete("fitness", image.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSectionTenPreview = () => {
+    if (!sectionTenImages.length) {
+      return renderEmptyPreview("No saved sauna images yet");
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Saved Sauna Images: {sectionTenImages.length}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Each image can have its own title, subtitle, and description.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {sectionTenImages.map((image) => (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            >
+              <div className="aspect-video bg-slate-100">
+                <img
+                  src={image.imagePreview}
+                  alt={image.title || `Sauna image ${image.id}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 p-4">
+                <SectionBadge>Sauna #{image.id}</SectionBadge>
+
+                {image.subtitle && <EyebrowText>{image.subtitle}</EyebrowText>}
+
+                <h3 className="text-xl font-bold text-slate-900">
+                  {image.title || "No title saved"}
+                </h3>
+
+                {image.description && (
+                  <p className="text-sm leading-7 text-slate-600">
+                    {image.description}
+                  </p>
+                )}
+
+                <PreviewActions
+                  onEdit={() => handleUrlContentEdit("sauna", image)}
+                  onDelete={() => handleUrlContentDelete("sauna", image.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderUrlContentPreview = (data, emptyTitle, sectionName = null) => {
     if (!data) {
       return renderEmptyPreview(emptyTitle);
     }
@@ -1869,6 +4154,13 @@ export default function PageEdit() {
           </p>
         )}
 
+        {sectionName && (
+          <PreviewActions
+            onEdit={() => handleUrlContentEdit(sectionName, data)}
+            onDelete={() => handleUrlContentDelete(sectionName, data.id)}
+          />
+        )}
+
         {data.updatedAt && <UpdatedAt date={data.updatedAt} />}
       </PreviewCard>
     );
@@ -1879,8 +4171,11 @@ export default function PageEdit() {
       return renderEmptyPreview("No saved content yet");
     }
 
+    const editHandler = isHomeSectionOne ? handleHomeSectionOneEdit : handleGenericEdit;
+    const deleteHandler = isHomeSectionOne ? handleHomeSectionOneDelete : handleGenericDelete;
+
     return (
-      <PreviewCard image={savedData.imageUrl}>
+      <PreviewCard image={savedData.imagePreview || savedData.imageUrl}>
         <div className="flex flex-wrap items-center gap-2">
           <SectionBadge>{currentSection.title}</SectionBadge>
           <StatusBadge active={savedData.isActive} />
@@ -1898,7 +4193,7 @@ export default function PageEdit() {
           </p>
         )}
 
-        {savedData.buttonText && (
+        {!isHomeSectionOne && !isHomeSectionTwo && savedData.buttonText && (
           <div className="pt-2">
             <span className="inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white">
               {savedData.buttonText}
@@ -1911,6 +4206,8 @@ export default function PageEdit() {
             )}
           </div>
         )}
+
+        <PreviewActions onEdit={editHandler} onDelete={deleteHandler} />
 
         {savedData.updatedAt && <UpdatedAt date={savedData.updatedAt} />}
       </PreviewCard>
@@ -1936,26 +4233,49 @@ export default function PageEdit() {
   };
 
   const getForm = () => {
+    if (isWelcomeSection) return renderWelcomeSlideForm();
     if (isSectionThree) return renderSectionThreeForm();
     if (isSectionFour) return renderSectionFourForm();
     if (isSectionFive) return renderSectionFiveForm();
     if (isSectionSix) return renderSectionSixForm();
 
-    if (isSectionSeven) {
-      return renderUrlContentForm(
-        sectionSevenForm,
-        updateSectionSevenField,
-        "fitness",
-        handleSectionSevenImageChange
+    if (isSectionSeven) return renderSectionSevenForm();
+
+    if (isSectionEight) {
+      return renderMultiUrlContentForm(
+        "parking",
+        "Parking",
+        "Example: Secure Parking",
+        "Example: Easy and safe access"
       );
     }
 
-    if (isSectionEight) {
+    if (isSectionNine) {
+      return renderMultiUrlContentForm(
+        "restaurant-bar",
+        "Restaurant and Bar",
+        "Example: Fine Dining",
+        "Example: Fresh meals and drinks"
+      );
+    }
+
+    if (isSectionTen) return renderSectionTenForm();
+
+    if (isSectionEleven) {
       return renderUrlContentForm(
-        sectionEightForm,
-        updateSectionEightField,
-        "parking",
-        handleSectionEightImageChange
+        sectionElevenForm,
+        "pool",
+        "pool",
+        (e) => handleUrlContentImageChange("pool", e)
+      );
+    }
+
+    if (isSectionTwelve) {
+      return renderMultiUrlContentForm(
+        "family-kids",
+        "Family and Kids",
+        "Example: Family Fun",
+        "Example: Safe and playful moments"
       );
     }
 
@@ -1963,24 +4283,31 @@ export default function PageEdit() {
   };
 
   const getPreview = () => {
+    if (isWelcomeSection) return renderWelcomeSlidePreview();
     if (isSectionThree) return renderSectionThreePreview();
     if (isSectionFour) return renderSectionFourPreview();
     if (isSectionFive) return renderSectionFivePreview();
     if (isSectionSix) return renderSectionSixPreview();
 
-    if (isSectionSeven) {
+    if (isSectionSeven) return renderSectionSevenPreview();
+
+    if (isSectionEight) return renderMultiUrlContentPreview("parking", "Parking");
+
+    if (isSectionNine)
+      return renderMultiUrlContentPreview("restaurant-bar", "Restaurant and Bar");
+
+    if (isSectionTen) return renderSectionTenPreview();
+
+    if (isSectionEleven) {
       return renderUrlContentPreview(
         savedData,
-        "No saved fitness section content yet"
+        "No saved pool section content yet",
+        "pool"
       );
     }
 
-    if (isSectionEight) {
-      return renderUrlContentPreview(
-        savedData,
-        "No saved parking section content yet"
-      );
-    }
+    if (isSectionTwelve)
+      return renderMultiUrlContentPreview("family-kids", "Family and Kids");
 
     return renderGenericPreview();
   };
@@ -1988,8 +4315,54 @@ export default function PageEdit() {
   const getSaveButtonText = () => {
     if (saving) return "Saving...";
 
+    if (isWelcomeSection && welcomeSlideForm.id) return "Update Slide";
+    if (isWelcomeSection) {
+      const count = welcomeSlideForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Slides` : "Add Slide";
+    }
+
+    if (isSectionSeven && sectionSevenForm.id) return "Update Fitness Image";
+    if (isSectionSeven) {
+      const count = sectionSevenForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Fitness Images` : "Add Fitness Image";
+    }
+
+    if (isSectionEight && sectionEightForm.id) return "Update Parking Image";
+    if (isSectionEight) {
+      const count = sectionEightForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Parking Images` : "Add Parking Image";
+    }
+
+    if (isSectionNine && sectionNineForm.id) return "Update Restaurant and Bar Image";
+    if (isSectionNine) {
+      const count = sectionNineForm.slideDrafts?.length || 0;
+      return count > 1
+        ? `Add ${count} Restaurant and Bar Images`
+        : "Add Restaurant and Bar Image";
+    }
+
     if (isSectionSix && sectionSixForm.id) return "Update Image";
-    if (isSectionSix) return "Add Image";
+    if (isSectionSix) {
+      const count = sectionSixForm.imageDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Images` : "Add Image";
+    }
+
+    if (isSectionTen && sectionTenForm.id) return "Update Sauna Image";
+    if (isSectionTen) {
+      const count = sectionTenForm.slideDrafts?.length || 0;
+      return count > 1 ? `Add ${count} Sauna Images` : "Add Sauna Image";
+    }
+
+    if (isSectionTwelve && sectionTwelveForm.id) return "Update Family and Kids Image";
+    if (isSectionTwelve) {
+      const count = sectionTwelveForm.slideDrafts?.length || 0;
+      return count > 1
+        ? `Add ${count} Family and Kids Images`
+        : "Add Family and Kids Image";
+    }
+
+    if (isHomeSectionOne && form.id) return "Update Section";
+    if (isHomeSectionTwo && form.id) return "Update Section";
 
     return "Save Section";
   };
@@ -2043,11 +4416,17 @@ export default function PageEdit() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5">
               <h2 className="text-lg font-bold text-slate-900">
-                {isSectionSix ? "Manage Gallery Image" : "Update Section"}
+                {isWelcomeSection
+                  ? "Manage Welcome Slide"
+                  : isSectionSix
+                  ? "Manage Gallery Image"
+                  : "Update Section"}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                {isSectionSix
+                {isWelcomeSection
+                  ? "Add, update, or remove welcome slides."
+                  : isSectionSix
                   ? "Upload, update, or remove gallery images."
                   : "Fill this form and click save."}
               </p>
@@ -2064,7 +4443,13 @@ export default function PageEdit() {
               >
                 {saving ? (
                   <Loader2 size={16} className="animate-spin" />
-                ) : isSectionSix && !sectionSixForm.id ? (
+                ) : (isWelcomeSection && !welcomeSlideForm.id) ||
+                  (isSectionSix && !sectionSixForm.id) ||
+                  (isSectionSeven && !sectionSevenForm.id) ||
+                  (isSectionEight && !sectionEightForm.id) ||
+                  (isSectionNine && !sectionNineForm.id) ||
+                  (isSectionTen && !sectionTenForm.id) ||
+                  (isSectionTwelve && !sectionTwelveForm.id) ? (
                   <Plus size={16} />
                 ) : (
                   <Save size={16} />
@@ -2154,7 +4539,13 @@ function TextareaField({ label, value, onChange, placeholder }) {
   );
 }
 
-function ImageUploadField({ preview, onChange, maxText }) {
+function ImageUploadField({
+  preview,
+  previews = [],
+  onChange,
+  maxText,
+  multiple = false,
+}) {
   return (
     <div>
       <label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -2166,7 +4557,7 @@ function ImageUploadField({ preview, onChange, maxText }) {
         <Upload size={24} className="mb-2 text-amber-500" />
 
         <span className="text-sm font-semibold text-slate-700">
-          Click to upload image
+          {multiple ? "Click to upload images" : "Click to upload image"}
         </span>
 
         <span className="mt-1 text-xs text-slate-400">{maxText}</span>
@@ -2175,11 +4566,27 @@ function ImageUploadField({ preview, onChange, maxText }) {
           type="file"
           accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={onChange}
+          multiple={multiple}
           className="hidden"
         />
       </label>
 
-      {preview && (
+      {previews.length > 1 ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {previews.map((item, index) => (
+            <div
+              key={`${item}-${index}`}
+              className="overflow-hidden rounded-xl border border-slate-200"
+            >
+              <img
+                src={item}
+                alt={`Selected preview ${index + 1}`}
+                className="h-32 w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      ) : preview ? (
         <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
           <img
             src={preview}
@@ -2187,7 +4594,7 @@ function ImageUploadField({ preview, onChange, maxText }) {
             className="h-48 w-full object-cover"
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -2230,6 +4637,30 @@ function PreviewCard({ image, children }) {
       )}
 
       <div className="space-y-3 p-5">{children}</div>
+    </div>
+  );
+}
+
+function PreviewActions({ onEdit, onDelete }) {
+  return (
+    <div className="flex gap-2 pt-2">
+      <button
+        type="button"
+        onClick={onEdit}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+      >
+        <Pencil size={14} />
+        Edit
+      </button>
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+      >
+        <Trash2 size={14} />
+        Delete
+      </button>
     </div>
   );
 }
