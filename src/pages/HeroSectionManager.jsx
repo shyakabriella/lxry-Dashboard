@@ -882,10 +882,6 @@ export default function HeroSectionManager() {
         </div>
       </div>
 
-      {/* 
-        The old/simple top button tab area was removed.
-        Only these clean card-style section buttons remain.
-      */}
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {weddingSections.map((section) => (
