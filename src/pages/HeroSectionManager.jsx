@@ -12,9 +12,13 @@ import {
   ArrowLeft,
   ArrowRight,
   Sparkles,
-  UtensilsCrossed,
-  BedDouble,
+  Heart,
+  Building2,
+  MapPin,
   Images,
+  BadgeCheck,
+  Layers,
+  Home,
 } from "lucide-react";
 
 const API_URL = (
@@ -30,30 +34,58 @@ const STORAGE_URL = (
 const weddingSections = [
   {
     key: "hero",
-    title: "Wedding Hero Slides",
+    title: "Hero Section",
     subtitle: "Manage wedding hero slider images and content.",
     badge: "Hero",
     icon: Sparkles,
   },
   {
-    key: "services",
-    title: "Wedding Services",
-    subtitle: "Manage wedding services and package content.",
+    key: "special-day",
+    title: "Envision Your Special Day Section",
+    subtitle: "Manage special day introduction content.",
     badge: "#1",
-    icon: UtensilsCrossed,
+    icon: Heart,
   },
   {
-    key: "room-blocks",
-    title: "Wedding Room Blocks",
-    subtitle: "Manage wedding accommodation and room block content.",
+    key: "services",
+    title: "Services Section",
+    subtitle: "Manage wedding service details.",
     badge: "#2",
-    icon: BedDouble,
+    icon: Layers,
   },
   {
-    key: "gallery",
-    title: "Wedding Gallery",
-    subtitle: "Manage wedding gallery images and visual content.",
+    key: "why-choose",
+    title: "Why Choose Luxury Garden Palace Section",
+    subtitle: "Manage reasons and benefits.",
     badge: "#3",
+    icon: BadgeCheck,
+  },
+  {
+    key: "apartment",
+    title: "Prime Luxury Apartment Living Section",
+    subtitle: "Manage luxury apartment content.",
+    badge: "#4",
+    icon: Home,
+  },
+  {
+    key: "accommodations",
+    title: "Wedding Accommodations Section",
+    subtitle: "Manage accommodation content.",
+    badge: "#5",
+    icon: Building2,
+  },
+  {
+    key: "location",
+    title: "Location Section",
+    subtitle: "Manage wedding location content.",
+    badge: "#6",
+    icon: MapPin,
+  },
+  {
+    key: "multiple-images",
+    title: "Multiple Images Section",
+    subtitle: "Manage wedding gallery images.",
+    badge: "#7",
     icon: Images,
   },
 ];
@@ -209,8 +241,8 @@ function ComingSoonSection({ section, onBack }) {
         </h2>
 
         <p className="mt-3 text-sm leading-7 text-slate-500">
-          This section is now ready in the wedding manager. You can connect it
-          to its own API and form later.
+          This section is now grouped under the wedding sections area. Connect
+          this card to its own manager component or API page when you are ready.
         </p>
 
         <button
@@ -829,12 +861,12 @@ export default function HeroSectionManager() {
 
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Wedding Sections
+                Wedding Hero Slides
               </h1>
 
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Manage wedding hero slides, services, room blocks, and gallery
-                from one place.
+                Select and manage all wedding page sections from one clean
+                place.
               </p>
             </div>
           </div>
