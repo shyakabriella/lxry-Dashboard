@@ -183,13 +183,6 @@
 
 
 
-
-
-
-
-
-
-
 import { useState, useEffect } from "react";
 import {
   Save,
@@ -200,7 +193,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000/api";
+// Use environment variables
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -235,6 +230,14 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
     console.error("API Request Failed:", error);
     throw error;
   }
+};
+
+// Helper function to get full image URL
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
 export default function PrimeApartmentSectionManager() {
@@ -278,9 +281,7 @@ export default function PrimeApartmentSectionManager() {
           description: data.description,
           image_url: data.image_url || "",
           image_file: null,
-          image_preview: data.image_url && !data.image_url.startsWith("http") 
-            ? `http://127.0.0.1:8000/storage/${data.image_url}` 
-            : data.image_url,
+          image_preview: getImageUrl(data.image_url),
         });
         setSectionId(data.id);
         setHasChanges(false);
@@ -574,6 +575,25 @@ export default function PrimeApartmentSectionManager() {
                 placeholder="Or enter image URL"
               />
             </div>
+            {sectionData.image_preview && (
+              <div className="mt-3 relative group">
+                <img 
+                  src={sectionData.image_preview} 
+                  className="w-full h-40 object-cover rounded-lg border shadow-sm" 
+                  alt="Preview"
+                />
+                <button
+                  onClick={() => {
+                    handleInputChange("image_file", null);
+                    handleInputChange("image_preview", null);
+                    handleInputChange("image_url", "");
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
             <p className="text-xs text-gray-500 mt-2">
               Recommended: 800x600px, max 5MB. Supports JPEG, PNG, WebP, GIF
             </p>
@@ -585,17 +605,12 @@ export default function PrimeApartmentSectionManager() {
           <h3 className="font-semibold text-lg mb-4">Live Preview</h3>
           
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-            {(sectionData.image_preview || sectionData.image_url) && (
+            {sectionData.image_preview && (
               <div className="relative h-64 overflow-hidden bg-gray-100">
                 <img 
-                  src={sectionData.image_preview || (sectionData.image_url && !sectionData.image_url.startsWith("http") 
-                    ? `http://127.0.0.1:8000/storage/${sectionData.image_url}` 
-                    : sectionData.image_url)} 
+                  src={sectionData.image_preview} 
                   className="w-full h-full object-cover" 
                   alt="Preview"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
                 />
               </div>
             )}

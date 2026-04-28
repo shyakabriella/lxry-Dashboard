@@ -605,8 +605,6 @@
 
 
 
-
-
 import { useState, useEffect } from "react";
 import {
   Save,
@@ -620,7 +618,9 @@ import {
   ArrowDown,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000/api";
+// Use environment variables
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -689,6 +689,13 @@ export default function WhyChooseSectionManager() {
     }
   };
 
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+    return `${STORAGE_URL}/${path}`;
+  };
+
   const resetForm = () => {
     setFormData({
       title: "Why Choose Luxury Garden Palace?",
@@ -711,9 +718,7 @@ export default function WhyChooseSectionManager() {
       description: slide.description || "",
       image_url: slide.image_url || "",
       image_file: null,
-      image_preview: slide.image_url && !slide.image_url.startsWith("http") 
-        ? `http://127.0.0.1:8000/storage/${slide.image_url}` 
-        : slide.image_url,
+      image_preview: getImageUrl(slide.image_url),
       display_order: slide.display_order || 0,
     });
   };
@@ -996,10 +1001,8 @@ export default function WhyChooseSectionManager() {
         )}
         
         {slides.map((slide, index) => {
-          const imageUrl = slide.image_url && !slide.image_url.startsWith("http") 
-            ? `http://127.0.0.1:8000/storage/${slide.image_url}` 
-            : slide.image_url;
-            
+          const imageUrl = getImageUrl(slide.image_url);
+          
           return (
             <div key={slide.id} className="border rounded-lg p-4 flex gap-4 items-center bg-white">
               <img src={imageUrl} alt={slide.subtitle} className="w-24 h-24 object-cover rounded" />

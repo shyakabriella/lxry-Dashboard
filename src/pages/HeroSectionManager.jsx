@@ -1,31 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useEffect, useState } from "react";
 import {
   Save,
@@ -40,7 +12,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000/api";
+// Use environment variables
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -63,6 +37,14 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
 
   const response = await fetch(`${API_URL}${url}`, options);
   return await response.json();
+};
+
+// Helper function to get full image URL
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
 export default function HeroSectionManager() {
@@ -286,7 +268,7 @@ export default function HeroSectionManager() {
 
   if (editingSlideIndex !== null) {
     const isNew = editingSlideIndex === -1;
-    const previewImage = imagePreview || editedSection?.image_url;
+    const previewImage = imagePreview || getImageUrl(editedSection?.image_url);
     
     return (
       <div className="space-y-6 p-6">
@@ -404,9 +386,7 @@ export default function HeroSectionManager() {
 
       <div className="space-y-3">
         {slides?.map((slide, index) => {
-          const imageUrl = slide.image_url && !slide.image_url.startsWith("http") 
-            ? `http://127.0.0.1:8000/storage/${slide.image_url}` 
-            : slide.image_url;
+          const imageUrl = getImageUrl(slide.image_url);
             
           return (
             <div key={slide.id} className="border rounded-lg p-4 flex gap-4 items-center">

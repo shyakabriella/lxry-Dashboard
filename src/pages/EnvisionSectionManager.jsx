@@ -8,7 +8,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000/api";
+// Use environment variables
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -31,6 +33,14 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
 
   const response = await fetch(`${API_URL}${url}`, options);
   return await response.json();
+};
+
+// Helper function to get full image URL
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
 export default function EnvisionSectionManager() {
@@ -82,12 +92,8 @@ export default function EnvisionSectionManager() {
           const img1 = envisionData.images?.[0] || "";
           const img2 = envisionData.images?.[1] || "";
           
-          const displayImg1 = img1 && !img1.startsWith("http") 
-            ? `http://127.0.0.1:8000/storage/${img1.replace(/^\/storage\//, '')}` 
-            : img1;
-          const displayImg2 = img2 && !img2.startsWith("http") 
-            ? `http://127.0.0.1:8000/storage/${img2.replace(/^\/storage\//, '')}` 
-            : img2;
+          const displayImg1 = getImageUrl(img1);
+          const displayImg2 = getImageUrl(img2);
           
           setEnvisionImage1(img1);
           setEnvisionImage2(img2);
@@ -238,8 +244,8 @@ export default function EnvisionSectionManager() {
         
         setEnvisionImage1(img1);
         setEnvisionImage2(img2);
-        setEnvisionImage1Preview(img1);
-        setEnvisionImage2Preview(img2);
+        setEnvisionImage1Preview(getImageUrl(img1));
+        setEnvisionImage2Preview(getImageUrl(img2));
         
         setEnvisionImage1File(null);
         setEnvisionImage2File(null);
@@ -360,7 +366,11 @@ export default function EnvisionSectionManager() {
               </label>
               <input
                 value={envisionImage1}
-                onChange={(e) => setEnvisionImage1(e.target.value) || setEnvisionHasChanges(true) || setEnvisionImage1Preview(e.target.value)}
+                onChange={(e) => {
+                  setEnvisionImage1(e.target.value);
+                  setEnvisionHasChanges(true);
+                  setEnvisionImage1Preview(e.target.value);
+                }}
                 className="flex-1 border rounded-lg p-2.5"
                 placeholder="Or enter image URL"
               />
@@ -394,7 +404,11 @@ export default function EnvisionSectionManager() {
               </label>
               <input
                 value={envisionImage2}
-                onChange={(e) => setEnvisionImage2(e.target.value) || setEnvisionHasChanges(true) || setEnvisionImage2Preview(e.target.value)}
+                onChange={(e) => {
+                  setEnvisionImage2(e.target.value);
+                  setEnvisionHasChanges(true);
+                  setEnvisionImage2Preview(e.target.value);
+                }}
                 className="flex-1 border rounded-lg p-2.5"
                 placeholder="Or enter image URL"
               />

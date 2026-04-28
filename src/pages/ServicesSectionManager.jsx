@@ -8,7 +8,8 @@ import {
   Trash2,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000/api";
+// Use environment variables
+const API_URL = import.meta.env.VITE_API_BASE_URL 
 
 export default function ServicesSectionManager() {
   const [services, setServices] = useState([]);
