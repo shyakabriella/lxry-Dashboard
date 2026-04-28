@@ -19,6 +19,12 @@ import {
   BadgeCheck,
   Layers,
   Home,
+  BedDouble,
+  UtensilsCrossed,
+  Camera,
+  Package,
+  Users,
+  Image,
 } from "lucide-react";
 
 const API_URL = (
@@ -31,64 +37,295 @@ const STORAGE_URL = (
   import.meta.env.VITE_STORAGE_URL || `${APP_URL}/storage`
 ).replace(/\/$/, "");
 
-const weddingSections = [
+const weddingGroups = [
   {
     key: "hero",
-    title: "Hero Section",
-    subtitle: "Manage wedding hero slider images and content.",
+    title: "Wedding Hero Slides",
+    subtitle: "Select and manage all wedding page sections from one clean place.",
     badge: "Hero",
     icon: Sparkles,
   },
   {
-    key: "special-day",
-    title: "Envision Your Special Day Section",
-    subtitle: "Manage special day introduction content.",
+    key: "venues",
+    title: "Wedding Venues",
+    subtitle: "Manage wedding venues content and ceremony sections.",
     badge: "#1",
-    icon: Heart,
-  },
-  {
-    key: "services",
-    title: "Services Section",
-    subtitle: "Manage wedding service details.",
-    badge: "#2",
-    icon: Layers,
-  },
-  {
-    key: "why-choose",
-    title: "Why Choose Luxury Garden Palace Section",
-    subtitle: "Manage reasons and benefits.",
-    badge: "#3",
-    icon: BadgeCheck,
-  },
-  {
-    key: "apartment",
-    title: "Prime Luxury Apartment Living Section",
-    subtitle: "Manage luxury apartment content.",
-    badge: "#4",
-    icon: Home,
-  },
-  {
-    key: "accommodations",
-    title: "Wedding Accommodations Section",
-    subtitle: "Manage accommodation content.",
-    badge: "#5",
     icon: Building2,
   },
   {
-    key: "location",
-    title: "Location Section",
-    subtitle: "Manage wedding location content.",
-    badge: "#6",
-    icon: MapPin,
+    key: "services",
+    title: "Wedding Services",
+    subtitle: "Manage services, catering, and wedding experience content.",
+    badge: "#2",
+    icon: UtensilsCrossed,
   },
   {
-    key: "multiple-images",
-    title: "Multiple Images Section",
-    subtitle: "Manage wedding gallery images.",
-    badge: "#7",
+    key: "packages",
+    title: "Wedding Packages",
+    subtitle: "Manage wedding packages, benefits, and bar packages.",
+    badge: "#3",
+    icon: Package,
+  },
+  {
+    key: "room-blocks",
+    title: "Wedding Room Blocks",
+    subtitle: "Manage accommodation and room block content.",
+    badge: "#4",
+    icon: BedDouble,
+  },
+  {
+    key: "gallery",
+    title: "Wedding Gallery",
+    subtitle: "Manage wedding gallery images and visual content.",
+    badge: "#5",
     icon: Images,
   },
 ];
+
+const weddingSectionCards = {
+  hero: [
+    {
+      key: "hero-slides",
+      title: "Hero Section",
+      subtitle: "Manage wedding hero slider images and content.",
+      badge: "Hero",
+      icon: Sparkles,
+      type: "slides",
+    },
+    {
+      key: "special-day",
+      title: "Envision Your Special Day Section",
+      subtitle: "Manage special day introduction content.",
+      badge: "#1",
+      icon: Heart,
+    },
+    {
+      key: "services-section",
+      title: "Services Section",
+      subtitle: "Manage wedding service details.",
+      badge: "#2",
+      icon: Layers,
+    },
+    {
+      key: "why-choose",
+      title: "Why Choose Luxury Garden Palace Section",
+      subtitle: "Manage reasons and benefits.",
+      badge: "#3",
+      icon: BadgeCheck,
+    },
+    {
+      key: "apartment",
+      title: "Prime Luxury Apartment Living Section",
+      subtitle: "Manage luxury apartment content.",
+      badge: "#4",
+      icon: Home,
+    },
+    {
+      key: "accommodations",
+      title: "Wedding Accommodations Section",
+      subtitle: "Manage accommodation content.",
+      badge: "#5",
+      icon: Building2,
+    },
+    {
+      key: "location",
+      title: "Location Section",
+      subtitle: "Manage wedding location content.",
+      badge: "#6",
+      icon: MapPin,
+    },
+    {
+      key: "multiple-images",
+      title: "Multiple Images Section",
+      subtitle: "Manage wedding gallery images.",
+      badge: "#7",
+      icon: Images,
+    },
+  ],
+
+  venues: [
+    {
+      key: "venues-hero",
+      title: "Venues Hero",
+      subtitle: "Manage the wedding venues hero section.",
+      badge: "Hero",
+      icon: Sparkles,
+    },
+    {
+      key: "luxury-wedding-venues",
+      title: "Luxury Wedding Venues in Kigali, Rwanda",
+      subtitle: "Manage luxury wedding venue introduction content.",
+      badge: "#1",
+      icon: Building2,
+    },
+    {
+      key: "garden-ceremony",
+      title: "Garden Ceremony Venue",
+      subtitle: "Manage garden ceremony venue content.",
+      badge: "#2",
+      icon: Heart,
+    },
+    {
+      key: "reception-hall",
+      title: "Wedding Reception Hall",
+      subtitle: "Manage reception hall content and details.",
+      badge: "#3",
+      icon: Users,
+    },
+    {
+      key: "bar-lounge",
+      title: "Bar & Lounge",
+      subtitle: "Manage wedding bar and lounge content.",
+      badge: "#4",
+      icon: UtensilsCrossed,
+    },
+  ],
+
+  services: [
+    {
+      key: "services-hero",
+      title: "Services Hero",
+      subtitle: "Manage the wedding services hero section.",
+      badge: "Hero",
+      icon: Sparkles,
+    },
+    {
+      key: "luxury-wedding-venues",
+      title: "Luxury Wedding Venues",
+      subtitle: "Manage service venue content.",
+      badge: "#1",
+      icon: Building2,
+    },
+    {
+      key: "seamless-experience",
+      title: "Seamless Experience",
+      subtitle: "Manage seamless wedding experience content.",
+      badge: "#2",
+      icon: BadgeCheck,
+    },
+    {
+      key: "catering",
+      title: "Catering",
+      subtitle: "Manage catering service content.",
+      badge: "#3",
+      icon: UtensilsCrossed,
+    },
+    {
+      key: "culinary-enhancements",
+      title: "Culinary Enhancements",
+      subtitle: "Manage culinary enhancement content.",
+      badge: "#4",
+      icon: Layers,
+    },
+    {
+      key: "what-you-get",
+      title: "What You Get",
+      subtitle: "Manage wedding service benefits and inclusions.",
+      badge: "#5",
+      icon: Check,
+    },
+  ],
+
+  packages: [
+    {
+      key: "packages-hero",
+      title: "Packages Hero",
+      subtitle: "Manage the wedding packages hero section.",
+      badge: "Hero",
+      icon: Sparkles,
+    },
+    {
+      key: "wedding-packages",
+      title: "Wedding Packages",
+      subtitle: "Manage wedding packages overview content.",
+      badge: "#1",
+      icon: Package,
+    },
+    {
+      key: "classic-package",
+      title: "Classic Package",
+      subtitle: "Manage classic wedding package content.",
+      badge: "#2",
+      icon: Heart,
+    },
+    {
+      key: "premium-package",
+      title: "Premium Package",
+      subtitle: "Manage premium wedding package content.",
+      badge: "#3",
+      icon: BadgeCheck,
+    },
+    {
+      key: "included-benefits",
+      title: "Included Benefits",
+      subtitle: "Manage benefits included in wedding packages.",
+      badge: "#4",
+      icon: Layers,
+    },
+    {
+      key: "bar-packages",
+      title: "Bar Packages",
+      subtitle: "Manage wedding bar package content.",
+      badge: "#5",
+      icon: UtensilsCrossed,
+    },
+  ],
+
+  "room-blocks": [
+    {
+      key: "room-blocks-hero",
+      title: "Room Blocks Hero",
+      subtitle: "Manage the room blocks hero section.",
+      badge: "Hero",
+      icon: Sparkles,
+    },
+    {
+      key: "meeting-rooms",
+      title: "Meeting Rooms in California",
+      subtitle: "Manage meeting room content.",
+      badge: "#1",
+      icon: Building2,
+    },
+    {
+      key: "accommodation-types",
+      title: "Accommodation Types",
+      subtitle: "Manage accommodation type content.",
+      badge: "#2",
+      icon: BedDouble,
+    },
+    {
+      key: "restful-essentials",
+      title: "Restful Essentials",
+      subtitle: "Manage restful essentials content.",
+      badge: "#3",
+      icon: Home,
+    },
+  ],
+
+  gallery: [
+    {
+      key: "gallery-hero",
+      title: "Gallery Hero",
+      subtitle: "Manage the wedding gallery hero section.",
+      badge: "Hero",
+      icon: Sparkles,
+    },
+    {
+      key: "gallery-overview",
+      title: "Gallery Overview",
+      subtitle: "Manage gallery overview content.",
+      badge: "#1",
+      icon: Image,
+    },
+    {
+      key: "wedding-images",
+      title: "Wedding Images",
+      subtitle: "Manage wedding gallery images.",
+      badge: "#2",
+      icon: Camera,
+    },
+  ],
+};
 
 const getErrorMessage = (data, fallback = "Something went wrong") => {
   if (!data) return fallback;
@@ -170,8 +407,8 @@ const getImageUrl = (path) => {
   return `${STORAGE_URL}/${path}`;
 };
 
-function WeddingSectionCard({ section, active, onClick }) {
-  const Icon = section.icon;
+function MainWeddingCard({ group, active, onClick }) {
+  const Icon = group.icon;
 
   return (
     <button
@@ -185,11 +422,65 @@ function WeddingSectionCard({ section, active, onClick }) {
     >
       <div className="mb-5 flex items-start justify-between gap-4">
         <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+          className={`flex h-12 w-12 items-center justify-center rounded-xl ${
             active ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"
           }`}
         >
-          <Icon size={22} />
+          <Icon size={23} />
+        </div>
+
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            active
+              ? "bg-orange-100 text-orange-700"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {group.badge}
+        </span>
+      </div>
+
+      <h3 className="text-[16px] font-bold text-slate-900">{group.title}</h3>
+
+      <p className="mt-2 min-h-[44px] text-sm leading-6 text-slate-500">
+        {group.subtitle}
+      </p>
+
+      <div
+        className={`mt-5 inline-flex items-center gap-2 text-sm font-semibold ${
+          active ? "text-orange-600" : "text-orange-500"
+        }`}
+      >
+        Open Section
+        <ArrowRight
+          size={16}
+          className="transition-transform group-hover:translate-x-1"
+        />
+      </div>
+    </button>
+  );
+}
+
+function SectionCard({ section, active, onClick }) {
+  const Icon = section.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group rounded-2xl border p-6 text-left shadow-sm transition-all duration-200 ${
+        active
+          ? "border-orange-300 bg-white shadow-md ring-2 ring-orange-100"
+          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+      }`}
+    >
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+            active ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"
+          }`}
+        >
+          <Icon size={23} />
         </div>
 
         <span
@@ -203,16 +494,16 @@ function WeddingSectionCard({ section, active, onClick }) {
         </span>
       </div>
 
-      <h3 className="text-[15px] font-bold text-slate-900">
+      <h3 className="text-lg font-bold leading-7 text-slate-900">
         {section.title}
       </h3>
 
-      <p className="mt-2 min-h-[38px] text-sm leading-6 text-slate-500">
+      <p className="mt-2 min-h-[50px] text-sm leading-7 text-slate-500">
         {section.subtitle}
       </p>
 
       <div
-        className={`mt-5 inline-flex items-center gap-2 text-sm font-semibold ${
+        className={`mt-6 inline-flex items-center gap-2 text-sm font-semibold ${
           active ? "text-orange-600" : "text-orange-500"
         }`}
       >
@@ -226,42 +517,46 @@ function WeddingSectionCard({ section, active, onClick }) {
   );
 }
 
-function ComingSoonSection({ section, onBack }) {
+function EmptyEditor({ section, onBack }) {
   const Icon = section.icon;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+      >
+        <ArrowLeft size={16} />
+        Back to section cards
+      </button>
+
       <div className="mx-auto max-w-2xl text-center">
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
           <Icon size={30} />
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900">
-          {section.title}
-        </h2>
+        <h2 className="text-2xl font-bold text-slate-900">{section.title}</h2>
 
         <p className="mt-3 text-sm leading-7 text-slate-500">
-          This section is now grouped under the wedding sections area. Connect
-          this card to its own manager component or API page when you are ready.
+          This button is now clean and organized like the Hero Section cards.
+          You can connect this card to its own form and API when the backend
+          endpoint is ready.
         </p>
 
-        <button
-          onClick={onBack}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
-        >
-          <ArrowLeft size={16} />
-          Back to Wedding Hero Slides
-        </button>
+        <div className="mt-6 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-5 text-sm leading-7 text-orange-700">
+          Current card: <span className="font-bold">{section.title}</span>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function HeroSectionManager() {
-  const [activeSection, setActiveSection] = useState("hero");
+  const [activeGroup, setActiveGroup] = useState("hero");
+  const [activeSectionKey, setActiveSectionKey] = useState(null);
   const [editedSection, setEditedSection] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(true);
   const [listLoading, setListLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -272,9 +567,14 @@ export default function HeroSectionManager() {
   const [imagePreview, setImagePreview] = useState(null);
   const [slides, setSlides] = useState([]);
 
+  const selectedGroup =
+    weddingGroups.find((group) => group.key === activeGroup) ||
+    weddingGroups[0];
+
+  const currentCards = weddingSectionCards[activeGroup] || [];
+
   const selectedSection =
-    weddingSections.find((section) => section.key === activeSection) ||
-    weddingSections[0];
+    currentCards.find((section) => section.key === activeSectionKey) || null;
 
   useEffect(() => {
     const storedToken =
@@ -339,9 +639,36 @@ export default function HeroSectionManager() {
       [field]: value,
     }));
 
-    setHasChanges(true);
     setSaved(false);
     setError(null);
+  };
+
+  const openGroup = (groupKey) => {
+    setActiveGroup(groupKey);
+    setActiveSectionKey(null);
+    setEditingSlideIndex(null);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setError(null);
+    setSaved(false);
+  };
+
+  const openSection = (section) => {
+    setActiveSectionKey(section.key);
+    setEditingSlideIndex(null);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setError(null);
+    setSaved(false);
+  };
+
+  const backToSectionCards = () => {
+    setActiveSectionKey(null);
+    setEditingSlideIndex(null);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setError(null);
+    setSaved(false);
   };
 
   const addNewSlide = () => {
@@ -358,8 +685,6 @@ export default function HeroSectionManager() {
       image_url: "",
       sort_order: slides.length + 1,
     });
-
-    setHasChanges(true);
   };
 
   const editSlide = (index) => {
@@ -369,7 +694,6 @@ export default function HeroSectionManager() {
     setError(null);
     setSaved(false);
     setEditedSection({ ...slides[index] });
-    setHasChanges(false);
   };
 
   const cancelEditSlide = () => {
@@ -381,8 +705,6 @@ export default function HeroSectionManager() {
     setEditedSection({
       images: slides.map((slide) => slide.image_url),
     });
-
-    setHasChanges(false);
   };
 
   const handleFileSelect = (event) => {
@@ -415,7 +737,6 @@ export default function HeroSectionManager() {
     setSelectedFile(file);
     setImagePreview(URL.createObjectURL(file));
     setError(null);
-    setHasChanges(true);
     setSaved(false);
   };
 
@@ -489,7 +810,6 @@ export default function HeroSectionManager() {
         setEditedSection({
           images: freshSlides.map((slide) => slide.image_url),
         });
-        setHasChanges(false);
         setSaved(true);
 
         setTimeout(() => setSaved(false), 2500);
@@ -594,12 +914,6 @@ export default function HeroSectionManager() {
     }
   };
 
-  const handleSave = () => {
-    if (editingSlideIndex !== null) {
-      saveSlide();
-    }
-  };
-
   const handleReset = () => {
     setEditedSection({
       images: slides.map((slide) => slide.image_url),
@@ -608,7 +922,6 @@ export default function HeroSectionManager() {
     setEditingSlideIndex(null);
     setSelectedFile(null);
     setImagePreview(null);
-    setHasChanges(false);
     setSaved(false);
     setError(null);
   };
@@ -833,7 +1146,7 @@ export default function HeroSectionManager() {
           </button>
 
           <button
-            onClick={handleSave}
+            onClick={saveSlide}
             disabled={uploading}
             className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -850,58 +1163,79 @@ export default function HeroSectionManager() {
     );
   }
 
+  const isSlideManager =
+    selectedSection?.type === "slides" && activeGroup === "hero";
+
   return (
     <div className="space-y-6 p-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-sm">
-              <Sparkles size={28} />
+              <selectedGroup.icon size={28} />
             </div>
 
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Wedding Hero Slides
+                {selectedGroup.title}
               </h1>
 
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Select and manage all wedding page sections from one clean
-                place.
+                {selectedGroup.subtitle}
               </p>
             </div>
           </div>
 
           <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
-            {weddingSections.length} Wedding Sections
+            {currentCards.length} Sections
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {weddingSections.map((section) => (
-            <WeddingSectionCard
-              key={section.key}
-              section={section}
-              active={activeSection === section.key}
-              onClick={() => {
-                setActiveSection(section.key);
-                setError(null);
-                setSaved(false);
-              }}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {weddingGroups.map((group) => (
+            <MainWeddingCard
+              key={group.key}
+              group={group}
+              active={activeGroup === group.key}
+              onClick={() => openGroup(group.key)}
             />
           ))}
         </div>
       </div>
 
-      {activeSection !== "hero" ? (
-        <ComingSoonSection
-          section={selectedSection}
-          onBack={() => setActiveSection("hero")}
-        />
-      ) : (
+      {!selectedSection && (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {currentCards.map((section) => (
+              <SectionCard
+                key={section.key}
+                section={section}
+                active={activeSectionKey === section.key}
+                onClick={() => openSection(section)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selectedSection && !isSlideManager && (
+        <EmptyEditor section={selectedSection} onBack={backToSectionCards} />
+      )}
+
+      {isSlideManager && (
         <>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <button
+              type="button"
+              onClick={backToSectionCards}
+              className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+            >
+              <ArrowLeft size={16} />
+              Back to section cards
+            </button>
+
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
