@@ -10,15 +10,7 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight,
   Sparkles,
-  Heart,
-  Building2,
-  MapPin,
-  Images,
-  BadgeCheck,
-  Layers,
-  Home,
 } from "lucide-react";
 
 const API_URL = (
@@ -30,65 +22,6 @@ const APP_URL = API_URL.replace(/\/api$/, "");
 const STORAGE_URL = (
   import.meta.env.VITE_STORAGE_URL || `${APP_URL}/storage`
 ).replace(/\/$/, "");
-
-const weddingSections = [
-  {
-    key: "hero",
-    title: "Hero Section",
-    subtitle: "Manage wedding hero slider images and content.",
-    badge: "Hero",
-    icon: Sparkles,
-  },
-  {
-    key: "special-day",
-    title: "Envision Your Special Day Section",
-    subtitle: "Manage special day introduction content.",
-    badge: "#1",
-    icon: Heart,
-  },
-  {
-    key: "services",
-    title: "Services Section",
-    subtitle: "Manage wedding service details.",
-    badge: "#2",
-    icon: Layers,
-  },
-  {
-    key: "why-choose",
-    title: "Why Choose Luxury Garden Palace Section",
-    subtitle: "Manage reasons and benefits.",
-    badge: "#3",
-    icon: BadgeCheck,
-  },
-  {
-    key: "apartment",
-    title: "Prime Luxury Apartment Living Section",
-    subtitle: "Manage luxury apartment content.",
-    badge: "#4",
-    icon: Home,
-  },
-  {
-    key: "accommodations",
-    title: "Wedding Accommodations Section",
-    subtitle: "Manage accommodation content.",
-    badge: "#5",
-    icon: Building2,
-  },
-  {
-    key: "location",
-    title: "Location Section",
-    subtitle: "Manage wedding location content.",
-    badge: "#6",
-    icon: MapPin,
-  },
-  {
-    key: "multiple-images",
-    title: "Multiple Images Section",
-    subtitle: "Manage wedding gallery images.",
-    badge: "#7",
-    icon: Images,
-  },
-];
 
 const getErrorMessage = (data, fallback = "Something went wrong") => {
   if (!data) return fallback;
@@ -170,95 +103,7 @@ const getImageUrl = (path) => {
   return `${STORAGE_URL}/${path}`;
 };
 
-function WeddingSectionCard({ section, active, onClick }) {
-  const Icon = section.icon;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group rounded-2xl border p-5 text-left shadow-sm transition-all duration-200 ${
-        active
-          ? "border-orange-300 bg-white shadow-md ring-2 ring-orange-100"
-          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
-      }`}
-    >
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            active ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"
-          }`}
-        >
-          <Icon size={22} />
-        </div>
-
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            active
-              ? "bg-orange-100 text-orange-700"
-              : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          {section.badge}
-        </span>
-      </div>
-
-      <h3 className="text-[15px] font-bold text-slate-900">
-        {section.title}
-      </h3>
-
-      <p className="mt-2 min-h-[38px] text-sm leading-6 text-slate-500">
-        {section.subtitle}
-      </p>
-
-      <div
-        className={`mt-5 inline-flex items-center gap-2 text-sm font-semibold ${
-          active ? "text-orange-600" : "text-orange-500"
-        }`}
-      >
-        Manage Section
-        <ArrowRight
-          size={16}
-          className="transition-transform group-hover:translate-x-1"
-        />
-      </div>
-    </button>
-  );
-}
-
-function ComingSoonSection({ section, onBack }) {
-  const Icon = section.icon;
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <div className="mx-auto max-w-2xl text-center">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
-          <Icon size={30} />
-        </div>
-
-        <h2 className="text-2xl font-bold text-slate-900">
-          {section.title}
-        </h2>
-
-        <p className="mt-3 text-sm leading-7 text-slate-500">
-          This section is now grouped under the wedding sections area. Connect
-          this card to its own manager component or API page when you are ready.
-        </p>
-
-        <button
-          onClick={onBack}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
-        >
-          <ArrowLeft size={16} />
-          Back to Wedding Hero Slides
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function HeroSectionManager() {
-  const [activeSection, setActiveSection] = useState("hero");
   const [editedSection, setEditedSection] = useState(null);
   const [saved, setSaved] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -271,10 +116,6 @@ export default function HeroSectionManager() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [slides, setSlides] = useState([]);
-
-  const selectedSection =
-    weddingSections.find((section) => section.key === activeSection) ||
-    weddingSections[0];
 
   useEffect(() => {
     const storedToken =
@@ -865,195 +706,164 @@ export default function HeroSectionManager() {
               </h1>
 
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Select and manage all wedding page sections from one clean
-                place.
+                Manage your wedding hero slider images, titles, subtitles, and
+                descriptions.
               </p>
             </div>
           </div>
 
-          <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
-            {weddingSections.length} Wedding Sections
+          <button
+            onClick={addNewSlide}
+            className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600"
+          >
+            <Plus size={16} />
+            Add New Slide
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Current Wedding Hero Slides
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Edit, delete, and reorder slides shown on the wedding hero
+              section.
+            </p>
           </div>
+
+          <button
+            onClick={handleReset}
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+          >
+            <RotateCcw size={16} />
+            Reset
+          </button>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {weddingSections.map((section) => (
-            <WeddingSectionCard
-              key={section.key}
-              section={section}
-              active={activeSection === section.key}
-              onClick={() => {
-                setActiveSection(section.key);
-                setError(null);
-                setSaved(false);
-              }}
-            />
-          ))}
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-600">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
         </div>
-      </div>
+      )}
 
-      {activeSection !== "hero" ? (
-        <ComingSoonSection
-          section={selectedSection}
-          onBack={() => setActiveSection("hero")}
-        />
-      ) : (
-        <>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Wedding Hero Slides
-                </h2>
+      {saved && (
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600">
+          <Check size={16} />
+          Saved successfully!
+        </div>
+      )}
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Manage your wedding hero slider images and content.
+      {listLoading && (
+        <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-sm text-orange-700">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+          Loading slides...
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {slides?.map((slide, index) => {
+          const imageUrl = getImageUrl(slide.image_url);
+
+          return (
+            <div
+              key={slide.id || index}
+              className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={slide.title || "Wedding slide"}
+                  className="h-32 w-full rounded-xl object-cover sm:h-24 sm:w-28"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="flex h-32 w-full items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-28">
+                  No image
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-slate-900">
+                  {slide.title || "Untitled slide"}
+                </h3>
+
+                {slide.subtitle && (
+                  <p className="text-sm font-semibold text-orange-600">
+                    {slide.subtitle}
+                  </p>
+                )}
+
+                {slide.description && (
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
+                    {slide.description}
+                  </p>
+                )}
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Order: {slide.sort_order || index + 1}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {index > 0 && (
+                  <button
+                    onClick={() => moveSlide(index, "up")}
+                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
+                    title="Move Up"
+                    disabled={listLoading}
+                  >
+                    <ArrowUp size={16} />
+                  </button>
+                )}
+
+                {index < slides.length - 1 && (
+                  <button
+                    onClick={() => moveSlide(index, "down")}
+                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
+                    title="Move Down"
+                    disabled={listLoading}
+                  >
+                    <ArrowDown size={16} />
+                  </button>
+                )}
+
                 <button
-                  onClick={handleReset}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  onClick={() => editSlide(index)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
                 >
-                  <RotateCcw size={16} />
-                  Reset
+                  Edit
                 </button>
 
                 <button
-                  onClick={addNewSlide}
-                  className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+                  onClick={() => deleteSlide(index)}
+                  className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
                 >
-                  <Plus size={16} />
-                  Add New Slide
+                  <Trash2 size={14} />
+                  Delete
                 </button>
               </div>
             </div>
+          );
+        })}
+
+        {(!slides || slides.length === 0) && !listLoading && (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-500">
+            No slides yet. Click{" "}
+            <span className="font-semibold text-slate-800">
+              Add New Slide
+            </span>{" "}
+            to create one.
           </div>
-
-          {error && (
-            <div className="flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-600">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {saved && (
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600">
-              <Check size={16} />
-              Saved successfully!
-            </div>
-          )}
-
-          {listLoading && (
-            <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-sm text-orange-700">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-              Loading slides...
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {slides?.map((slide, index) => {
-              const imageUrl = getImageUrl(slide.image_url);
-
-              return (
-                <div
-                  key={slide.id || index}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
-                >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={slide.title || "Wedding slide"}
-                      className="h-32 w-full rounded-xl object-cover sm:h-24 sm:w-28"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="flex h-32 w-full items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-28">
-                      No image
-                    </div>
-                  )}
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-slate-900">
-                      {slide.title || "Untitled slide"}
-                    </h3>
-
-                    {slide.subtitle && (
-                      <p className="text-sm font-semibold text-orange-600">
-                        {slide.subtitle}
-                      </p>
-                    )}
-
-                    {slide.description && (
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
-                        {slide.description}
-                      </p>
-                    )}
-
-                    <p className="mt-1 text-xs text-slate-400">
-                      Order: {slide.sort_order || index + 1}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {index > 0 && (
-                      <button
-                        onClick={() => moveSlide(index, "up")}
-                        className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
-                        title="Move Up"
-                        disabled={listLoading}
-                      >
-                        <ArrowUp size={16} />
-                      </button>
-                    )}
-
-                    {index < slides.length - 1 && (
-                      <button
-                        onClick={() => moveSlide(index, "down")}
-                        className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
-                        title="Move Down"
-                        disabled={listLoading}
-                      >
-                        <ArrowDown size={16} />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => editSlide(index)}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => deleteSlide(index)}
-                      className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 size={14} />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {(!slides || slides.length === 0) && !listLoading && (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-500">
-                No slides yet. Click{" "}
-                <span className="font-semibold text-slate-800">
-                  Add New Slide
-                </span>{" "}
-                to create one.
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
