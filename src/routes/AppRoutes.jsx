@@ -20,6 +20,7 @@ import RestaurantManager from "../pages/RestaurantManager";
 import WeddingManager from "../pages/WeddingManager";
 import GalleryManager from "../pages/GalleryManager";
 import MeetingManager from "../pages/MeetingManager";
+import Booking from "../pages/Booking";
 
 export default function AppRoutes() {
   return (
@@ -29,6 +30,9 @@ export default function AppRoutes() {
       <Route path="/admin" element={<Layouts />}>
         <Route index element={<Dashboard />} />
 
+        {/* Main admin pages */}
+        <Route path="booking" element={<Booking />} />
+
         <Route path="homepage" element={<HomepageManager />} />
         <Route path="homepage/:sectionSlug" element={<PageEdit />} />
 
@@ -37,12 +41,14 @@ export default function AppRoutes() {
         <Route path="meeting" element={<MeetingManager />} />
         <Route path="gallery" element={<GalleryManager />} />
 
+        {/* Property pages */}
         <Route path="property/home" element={<PropertyHome />} />
         <Route path="property/accommodations" element={<Accommodations />} />
         <Route path="property/wedding" element={<Wedding />} />
         <Route path="property/gallery" element={<Gallery />} />
         <Route path="property/restaurant" element={<Restaurant />} />
         <Route path="property/massage-spa" element={<MassageSpa />} />
+
         <Route path="property">
           <Route path="home" element={<PropertyHome />} />
           <Route path="accommodations" element={<Accommodations />} />
@@ -50,7 +56,6 @@ export default function AppRoutes() {
           <Route path="gallery" element={<Gallery />} />
           <Route path="restaurant" element={<Restaurant />} />
           <Route path="massage-spa" element={<MassageSpa />} />
-
           <Route path="meeting" element={<MeetingManager />} />
         </Route>
 
