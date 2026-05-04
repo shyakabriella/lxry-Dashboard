@@ -15,6 +15,7 @@ import {
   Image,
   Utensils,
   Flower,
+  CalendarCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -23,6 +24,11 @@ const navItems = [
     icon: LayoutDashboard,
     label: "Dashboard",
     end: true,
+  },
+  {
+    to: "/admin/booking",
+    icon: CalendarCheck,
+    label: "Booking",
   },
   {
     to: "/admin/homepage",

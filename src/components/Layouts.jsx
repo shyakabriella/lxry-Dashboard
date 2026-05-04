@@ -15,6 +15,7 @@ import {
   Image,
   Flower,
   Calendar,
+  CalendarCheck,
   Loader2,
 } from "lucide-react";
 
@@ -27,6 +28,11 @@ const navItems = [
     icon: LayoutDashboard,
     label: "Dashboard",
     end: true,
+  },
+  {
+    to: "/admin/booking",
+    icon: CalendarCheck,
+    label: "Booking",
   },
   {
     to: "/admin/property",
@@ -98,7 +104,7 @@ export default function Layouts() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === "/admin/property/home") {
+    if (location.pathname.startsWith("/admin/property")) {
       setOpenProperty(true);
     }
   }, [location.pathname]);
@@ -185,8 +191,9 @@ export default function Layouts() {
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
             if (item.type === "submenu") {
-              const isPropertyHomeActive =
-                location.pathname === "/admin/property/home";
+              const isPropertyActive =
+                location.pathname === item.to ||
+                location.pathname.startsWith(`${item.to}/`);
 
               return (
                 <div key={item.to} className="space-y-1">
@@ -194,14 +201,14 @@ export default function Layouts() {
                     type="button"
                     onClick={() => setOpenProperty((prev) => !prev)}
                     className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
-                      isPropertyHomeActive || openProperty
+                      isPropertyActive || openProperty
                         ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/10"
                         : "text-slate-300 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 ${
-                        isPropertyHomeActive || openProperty
+                        isPropertyActive || openProperty
                           ? "bg-amber-500/20 text-amber-300"
                           : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
                       }`}

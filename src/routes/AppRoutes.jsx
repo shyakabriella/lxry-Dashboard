@@ -20,64 +20,6 @@ import WeddingManager from "../pages/WeddingManager";
 import GalleryManager from "../pages/GalleryManager";
 import MeetingManager from "../pages/MeetingManager";
 
-// Import wedding section managers for nested routes
-import HeroSectionManager from "../pages/HeroSectionManager";
-import EnvisionSectionManager from "../pages/EnvisionSectionManager";
-import ServicesSectionManager from "../pages/ServicesSectionManager";
-import WhyChooseSectionManager from "../pages/WhyChooseSectionManager";
-import PrimeApartmentSectionManager from "../pages/PrimeApartmentSectionManager";
-import LocationSectionManager from "../pages/LocationSectionManager";
-import MultipleImagesSectionManager from "../pages/MultipleImagesSectionManager";
-
-// =========================================================================
-// WEDDING VENUES MICROSERVICE
-// =========================================================================
-import WeddingVenuesManagerMicroService from "../pages/wedding-microservices/WeddingVenuesManagerMicroService";
-import VenuesHeroManager from "../pages/wedding-microservices/VenuesHeroManager";
-import LuxuryVenuesManager from "../pages/wedding-microservices/LuxuryVenuesManager";
-import GardenCeremonyManager from "../pages/wedding-microservices/GardenCeremonyManager";
-import WeddingReceptionHallManager from "../pages/wedding-microservices/WeddingReceptionHallManager";
-import BarLoungeManager from "../pages/wedding-microservices/BarLoungeManager";
-
-// =========================================================================
-// WEDDING SERVICES MICROSERVICE
-// =========================================================================
-import WeddingServicesManagerMicroService from "../pages/wedding-microservices/WeddingServicesManagerMicroService";
-import ServicesHeroManager from "../pages/wedding-microservices/ServicesHeroManager";
-import ServicesLuxuryManager from "../pages/wedding-microservices/ServicesLuxuryManager";
-import ServicesSeamlessManager from "../pages/wedding-microservices/ServicesSeamlessManager";
-import ServicesCateringManager from "../pages/wedding-microservices/ServicesCateringManager";
-import ServicesCulinaryManager from "../pages/wedding-microservices/ServicesCulinaryManager";
-import ServicesWhatYouGetManager from "../pages/wedding-microservices/ServicesWhatYouGetManager";
-
-// =========================================================================
-// WEDDING PACKAGES MICROSERVICE
-// =========================================================================
-import WeddingPackagesManagerMicroService from "../pages/wedding-microservices/WeddingPackagesManagerMicroService";
-import PackagesHeroManager from "../pages/wedding-microservices/PackagesHeroManager";
-import PackagesWeddingPackagesManager from "../pages/wedding-microservices/PackagesWeddingPackagesManager";
-import PackagesClassicManager from "../pages/wedding-microservices/PackagesClassicManager";
-import PackagesPremiumManager from "../pages/wedding-microservices/PackagesPremiumManager";
-import PackagesBenefitsManager from "../pages/wedding-microservices/PackagesBenefitsManager";
-import PackagesBarManager from "../pages/wedding-microservices/PackagesBarManager";
-
-// =========================================================================
-// WEDDING ROOM BLOCKS MICROSERVICE
-// =========================================================================
-import WeddingRoomBlocksManagerMicroService from "../pages/wedding-microservices/WeddingRoomBlocksManagerMicroService";
-import RoomBlocksHeroManager from "../pages/wedding-microservices/RoomBlocksHeroManager";
-import RoomBlocksMeetingManager from "../pages/wedding-microservices/RoomBlocksMeetingManager";
-import RoomBlocksAccommodationManager from "../pages/wedding-microservices/RoomBlocksAccommodationManager";
-import RoomBlocksEssentialsManager from "../pages/wedding-microservices/RoomBlocksEssentialsManager";
-
-// =========================================================================
-// WEDDING GALLERY MICROSERVICE (UNCOMMENTED)
-// =========================================================================
-import WeddingGalleryManagerMicroService from "../pages/wedding-microservices/WeddingGalleryManagerMicroService";
-import GalleryHeroManager from "../pages/wedding-microservices/GalleryHeroManager";
-import GalleryOverviewManager from "../pages/wedding-microservices/GalleryOverviewManager";
-import GalleryImagesManager from "../pages/wedding-microservices/GalleryImagesManager";
-
 export default function AppRoutes() {
   return (
     <Routes>
@@ -85,6 +27,9 @@ export default function AppRoutes() {
 
       <Route path="/admin" element={<Layouts />}>
         <Route index element={<Dashboard />} />
+
+        {/* Main admin pages */}
+        <Route path="booking" element={<Booking />} />
 
         <Route path="homepage" element={<HomepageManager />} />
         <Route path="homepage/:sectionSlug" element={<PageEdit />} />
@@ -150,13 +95,13 @@ export default function AppRoutes() {
         <Route path="meeting" element={<MeetingManager />} />
         <Route path="gallery" element={<GalleryManager />} />
 
-        {/* ========== PROPERTY ROUTES ========== */}
         <Route path="property/home" element={<PropertyHome />} />
         <Route path="property/accommodations" element={<Accommodations />} />
         <Route path="property/wedding" element={<Wedding />} />
         <Route path="property/gallery" element={<Gallery />} />
         <Route path="property/restaurant" element={<Restaurant />} />
         <Route path="property/massage-spa" element={<MassageSpa />} />
+
         <Route path="property">
           <Route path="home" element={<PropertyHome />} />
           <Route path="accommodations" element={<Accommodations />} />
