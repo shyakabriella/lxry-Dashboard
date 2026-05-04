@@ -294,13 +294,13 @@ export default function MultipleImagesSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Wedding Gallery</h2>
           <p className="text-sm text-gray-500">Manage your wedding gallery images</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {sectionId && (
             <button 
               onClick={handleDelete}
@@ -352,8 +352,8 @@ export default function MultipleImagesSectionManager() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl border shadow-sm">
           <label className="block text-sm font-medium mb-2">Images</label>
           
           {images.map((img, idx) => (
@@ -410,7 +410,7 @@ export default function MultipleImagesSectionManager() {
           </p>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-xl border shadow-sm">
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl border shadow-sm">
           <h3 className="font-semibold text-lg mb-4">Gallery Preview</h3>
           
           {images.length > 0 && images.some(img => img) ? (

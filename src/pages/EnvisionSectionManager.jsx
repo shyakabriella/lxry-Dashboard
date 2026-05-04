@@ -280,13 +280,13 @@ export default function EnvisionSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold">Envision Your Special Day Section</h2>
           <p className="text-sm text-gray-500">Edit the content for this section (Upload or enter URL)</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={resetEnvisionForm} className="px-3 py-2 border rounded-lg flex items-center gap-2">
             <RotateCcw size={15} /> Reset
           </button>
@@ -319,8 +319,8 @@ export default function EnvisionSectionManager() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-4 bg-white p-6 rounded-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
             <input
@@ -428,7 +428,7 @@ export default function EnvisionSectionManager() {
         </div>
 
         {/* RIGHT - PREVIEW */}
-        <div className="bg-gray-50 p-4 rounded-xl">
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl">
           <h3 className="font-semibold mb-3">Preview</h3>
           {envisionImage1Preview && (
             <div>

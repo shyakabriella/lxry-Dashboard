@@ -206,13 +206,13 @@ export default function ServicesSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Services Section</h2>
           <p className="text-sm text-gray-500">Manage your wedding services list</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={handleReset} className="px-3 py-2 border rounded-lg flex items-center gap-2">
             <RotateCcw size={15} /> Refresh
           </button>

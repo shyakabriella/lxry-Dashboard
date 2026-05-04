@@ -1,68 +1,36 @@
 import { useState, useEffect } from "react";
-import {
-  Save,
-  RotateCcw,
-  Check,
-  AlertCircle,
-  Upload,
-  Trash2,
-} from "lucide-react";
+import { Save, RotateCcw, Check, AlertCircle, Upload, Trash2 } from "lucide-react";
 
-// Use environment variables
 const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
-  const options = {
-    method,
-    headers: {},
-  };
-
-  if (token) {
-    options.headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  if (isFormData) {
-    options.body = body;
-  } else {
+  const options = { method, headers: {} };
+  if (token) options.headers["Authorization"] = `Bearer ${token}`;
+  if (isFormData) options.body = body;
+  else {
     options.headers["Content-Type"] = "application/json";
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
+    if (body) options.body = JSON.stringify(body);
   }
-
-  try {
-    const response = await fetch(`${API_URL}${url}`, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error Response:", errorText);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error("API Request Failed:", error);
-    throw error;
+  const response = await fetch(`${API_URL}${url}`, options);
+  if (method === "GET" && response.status === 404) return { success: false };
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API Error:", errorText);
+    throw new Error(`HTTP ${response.status}`);
   }
+  return await response.json();
 };
 
-// Helper function to get full image URL - FALLBACK only
 const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  if (path.startsWith('/storage')) return `${window.location.origin}${path}`;
-  return `${window.location.origin}/storage/${path}`;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
-export default function PrimeApartmentSectionManager() {
-  const [sectionData, setSectionData] = useState({
-    title: "Prime Luxury Apartment Living",
-    subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-    description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-    image_url: "",
-    image_file: null,
-    image_preview: null,
-  });
+export default function PackagesHeroManager() {
+  const [sectionData, setSectionData] = useState({ title: "", image_url: "", image_file: null, image_preview: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [token, setToken] = useState(null);
@@ -70,7 +38,6 @@ export default function PrimeApartmentSectionManager() {
   const [saved, setSaved] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -85,42 +52,24 @@ export default function PrimeApartmentSectionManager() {
 
   const fetchSectionData = async () => {
     try {
-      const result = await apiRequest("/wedding/section3/apartment", "GET");
-      
-      console.log("Fetched data:", result);
+      const result = await apiRequest("/wedding-packages/hero", "GET");
+      console.log("Fetched hero data:", result);
       
       if (result.success && result.data) {
-        const data = result.data;
-        
-        // Debug: Log the image_url from API
-        console.log("Image URL from API:", data.image_url);
-        
         setSectionData({
-          title: data.title || "Prime Luxury Apartment Living",
-          subtitle: data.subtitle || "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: data.description || "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: data.image_url || "",
+          title: result.data.title || "",
+          image_url: result.data.image_url || "",
           image_file: null,
-          image_preview: data.image_url || null,
+          image_preview: getImageUrl(result.data.image_url),
         });
-        setSectionId(data.id);
+        setSectionId(result.data.id);
         setHasChanges(false);
       } else {
-        setSectionId(null);
-        setSectionData({
-          title: "Prime Luxury Apartment Living",
-          subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: "",
-          image_file: null,
-          image_preview: null,
-        });
+        // No data exists yet - this is normal for first time
+        console.log("No hero data found, using defaults");
       }
     } catch (err) {
-      console.error("Error fetching section data:", err);
-      if (!err.message?.includes("404")) {
-        setError("Failed to load section data");
-      }
+      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
@@ -162,20 +111,10 @@ export default function PrimeApartmentSectionManager() {
       setError("Title is required");
       return;
     }
-    if (!sectionData.subtitle) {
-      setError("Subtitle is required");
-      return;
-    }
-    if (!sectionData.description) {
-      setError("Description is required");
-      return;
-    }
 
     const submitData = new FormData();
     submitData.append("title", sectionData.title);
-    submitData.append("subtitle", sectionData.subtitle);
-    submitData.append("description", sectionData.description);
-
+    
     if (sectionData.image_file) {
       submitData.append("image", sectionData.image_file);
       setUploadingImage(true);
@@ -183,20 +122,18 @@ export default function PrimeApartmentSectionManager() {
       submitData.append("image_url", sectionData.image_url);
     }
 
-    let result;
-    
     try {
+      let result;
       if (sectionId) {
         submitData.append("_method", "PUT");
-        result = await apiRequest(`/admin/wedding/section3/apartment/${sectionId}`, "POST", submitData, token, true);
+        result = await apiRequest(`/admin/wedding-packages/hero/${sectionId}`, "POST", submitData, token, true);
       } else {
-        result = await apiRequest("/admin/wedding/section3/apartment", "POST", submitData, token, true);
+        result = await apiRequest("/admin/wedding-packages/hero", "POST", submitData, token, true);
       }
 
       console.log("Save response:", result);
 
       if (result.success) {
-        if (result.data.id) setSectionId(result.data.id);
         setHasChanges(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -216,60 +153,8 @@ export default function PrimeApartmentSectionManager() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!sectionId) {
-      setError("No section to delete");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this section? This action cannot be undone.")) {
-      return;
-    }
-
-    setDeleting(true);
-    setError(null);
-
-    try {
-      const result = await apiRequest(`/admin/wedding/section3/apartment/${sectionId}`, "DELETE", null, token);
-      
-      if (result.success) {
-        setSectionData({
-          title: "Prime Luxury Apartment Living",
-          subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: "",
-          image_file: null,
-          image_preview: null,
-        });
-        setSectionId(null);
-        setHasChanges(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      } else {
-        setError(result.message || "Error deleting section");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      setError("Failed to delete section");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const handleReset = () => {
-    if (sectionId) {
-      fetchSectionData();
-    } else {
-      setSectionData({
-        title: "Prime Luxury Apartment Living",
-        subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-        description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-        image_url: "",
-        image_file: null,
-        image_preview: null,
-      });
-      setHasChanges(true);
-    }
+    fetchSectionData();
     setError(null);
   };
 
@@ -294,23 +179,13 @@ export default function PrimeApartmentSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold">Prime Luxury Apartment Living Section</h2>
-          <p className="text-sm text-gray-500">Edit the content for this section</p>
+          <h2 className="text-xl font-bold">Packages Hero Section</h2>
+          <p className="text-sm text-gray-500">Edit the hero banner content</p>
         </div>
-        <div className="flex gap-2">
-          {sectionId && (
-            <button 
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-3 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600 transition disabled:bg-red-300"
-            >
-              <Trash2 size={15} />
-              {deleting ? "Deleting..." : "Delete Section"}
-            </button>
-          )}
+        <div className="flex gap-2 flex-wrap">
           <button 
             onClick={handleReset} 
             className="px-3 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50 transition"
@@ -352,42 +227,21 @@ export default function PrimeApartmentSectionManager() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left - Form */}
-        <div className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
+        <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl border shadow-sm">
           <div>
             <label className="block text-sm font-medium mb-1">Title *</label>
             <input
               value={sectionData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              placeholder="Title"
+              placeholder="Enter title"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Subtitle *</label>
-            <input
-              value={sectionData.subtitle}
-              onChange={(e) => handleInputChange("subtitle", e.target.value)}
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              placeholder="Subtitle"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Description *</label>
-            <textarea
-              value={sectionData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              rows={4}
-              placeholder="Description"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
+            <label className="block text-sm font-medium mb-1">Background Image</label>
             <div className="flex gap-2 items-center">
               <label className="cursor-pointer bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2 text-sm">
                 <Upload size={16} />
@@ -413,7 +267,6 @@ export default function PrimeApartmentSectionManager() {
                   className="w-full h-40 object-cover rounded-lg border shadow-sm" 
                   alt="Preview"
                   onError={(e) => {
-                    console.error("Image failed to load:", sectionData.image_preview);
                     e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                   }}
                 />
@@ -430,16 +283,13 @@ export default function PrimeApartmentSectionManager() {
               </div>
             )}
             <p className="text-xs text-gray-500 mt-2">
-              Recommended: 800x600px, max 5MB. Supports JPEG, PNG, WebP, GIF
-            </p>
-            <p className="text-xs text-amber-600 mt-1">
-              Current image URL: {sectionData.image_url || "None"}
+              Recommended: 1920x1080px, max 5MB. Supports JPEG, PNG, WebP, GIF
             </p>
           </div>
         </div>
 
         {/* Right - Live Preview */}
-        <div className="bg-gray-50 p-6 rounded-xl border shadow-sm">
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl border shadow-sm">
           <h3 className="font-semibold text-lg mb-4">Live Preview</h3>
           
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
@@ -450,7 +300,6 @@ export default function PrimeApartmentSectionManager() {
                   className="w-full h-full object-cover" 
                   alt="Preview"
                   onError={(e) => {
-                    console.error("Preview image failed to load:", sectionData.image_preview);
                     e.target.style.display = 'none';
                   }}
                 />
@@ -458,15 +307,12 @@ export default function PrimeApartmentSectionManager() {
             )}
             
             <div className="p-6">
-              <h2 className="font-bold text-2xl text-gray-800 mb-2">
-                {sectionData.title}
+              <p className="text-[13px] uppercase tracking-[0.2em] text-amber-600 font-medium">
+                Hero Section
+              </p>
+              <h2 className="font-bold text-2xl text-gray-800 mt-2 mb-3">
+                {sectionData.title || "No title saved"}
               </h2>
-              <p className="text-amber-600 text-sm font-medium mb-4">
-                {sectionData.subtitle}
-              </p>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {sectionData.description}
-              </p>
             </div>
           </div>
         </div>

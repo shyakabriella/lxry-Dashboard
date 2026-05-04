@@ -601,10 +601,6 @@
 
 
 
-
-
-
-
 import { useState, useEffect } from "react";
 import {
   Save,
@@ -619,8 +615,8 @@ import {
 } from "lucide-react";
 
 // Use environment variables
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -642,7 +638,26 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
   }
 
   const response = await fetch(`${API_URL}${url}`, options);
+  
+  // Handle 404 gracefully for GET requests
+  if (method === "GET" && response.status === 404) {
+    return { success: false, data: [] };
+  }
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API Error Response:", errorText);
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
   return await response.json();
+};
+
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
 export default function WhyChooseSectionManager() {
@@ -653,6 +668,7 @@ export default function WhyChooseSectionManager() {
   const [editingSlide, setEditingSlide] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: "Why Choose Luxury Garden Palace?",
@@ -678,8 +694,15 @@ export default function WhyChooseSectionManager() {
   const fetchSlides = async () => {
     try {
       const result = await apiRequest("/wedding/section2/slides", "GET");
-      if (result.success) {
-        setSlides(result.data);
+      if (result.success && result.data) {
+        // Backend now returns full URLs, but we use getImageUrl as fallback
+        const processedSlides = result.data.map(slide => ({
+          ...slide,
+          image_url: getImageUrl(slide.image_url)
+        }));
+        setSlides(processedSlides);
+      } else {
+        setSlides([]);
       }
     } catch (err) {
       console.error("Error fetching slides:", err);
@@ -687,13 +710,6 @@ export default function WhyChooseSectionManager() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
-    return `${STORAGE_URL}/${path}`;
   };
 
   const resetForm = () => {
@@ -776,6 +792,7 @@ export default function WhyChooseSectionManager() {
       return;
     }
 
+    setUploading(true);
     const submitData = new FormData();
     submitData.append("title", formData.title);
     submitData.append("subtitle", formData.subtitle);
@@ -789,39 +806,50 @@ export default function WhyChooseSectionManager() {
     }
 
     let result;
-    if (editingSlide) {
-      submitData.append("_method", "PUT");
-      result = await apiRequest(`/admin/wedding/section2/slides/${editingSlide.id}`, "POST", submitData, token, true);
-    } else {
-      result = await apiRequest("/admin/wedding/section2/slides", "POST", submitData, token, true);
-    }
-
-    if (result.success) {
-      await fetchSlides();
-      setIsAdding(false);
-      setEditingSlide(null);
-      resetForm();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } else {
-      setError(result.message || "Error saving slide");
-      if (result.errors) {
-        const errorMessages = Object.values(result.errors).flat().join(", ");
-        setError(errorMessages);
+    try {
+      if (editingSlide) {
+        submitData.append("_method", "PUT");
+        result = await apiRequest(`/admin/wedding/section2/slides/${editingSlide.id}`, "POST", submitData, token, true);
+      } else {
+        result = await apiRequest("/admin/wedding/section2/slides", "POST", submitData, token, true);
       }
+
+      if (result.success) {
+        await fetchSlides();
+        setIsAdding(false);
+        setEditingSlide(null);
+        resetForm();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        setError(result.message || "Error saving slide");
+        if (result.errors) {
+          const errorMessages = Object.values(result.errors).flat().join(", ");
+          setError(errorMessages);
+        }
+      }
+    } catch (err) {
+      setError("Failed to save slide: " + err.message);
+    } finally {
+      setUploading(false);
     }
   };
 
   const deleteSlide = async (slide) => {
-    if (!confirm(`Delete slide "${slide.subtitle}"? This action cannot be undone.`)) return;
+    const slideName = slide.subtitle || slide.title || `Slide ${slide.id}`;
+    if (!confirm(`Delete slide "${slideName}"? This action cannot be undone.`)) return;
     
-    const result = await apiRequest(`/admin/wedding/section2/slides/${slide.id}`, "DELETE", null, token);
-    if (result.success) {
-      await fetchSlides();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } else {
-      setError(result.message || "Error deleting slide");
+    try {
+      const result = await apiRequest(`/admin/wedding/section2/slides/${slide.id}`, "DELETE", null, token);
+      if (result.success) {
+        await fetchSlides();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        setError(result.message || "Error deleting slide");
+      }
+    } catch (err) {
+      setError("Failed to delete slide: " + err.message);
     }
   };
 
@@ -866,8 +894,8 @@ export default function WhyChooseSectionManager() {
   // Editor View
   if (isAdding || editingSlide) {
     return (
-      <div className="space-y-6 p-6">
-        <div className="flex justify-between items-center">
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold">{editingSlide ? "Edit Slide" : "Add New Slide"}</h2>
             <p className="text-sm text-gray-500">Create or edit a Why Choose slide</p>
@@ -883,8 +911,8 @@ export default function WhyChooseSectionManager() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-4 bg-white p-6 rounded-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl">
             <div>
               <label className="block text-sm font-medium mb-1">Title</label>
               <input
@@ -930,7 +958,7 @@ export default function WhyChooseSectionManager() {
               </div>
               {(formData.image_preview || formData.image_url) && (
                 <div className="mt-2 relative">
-                  <img src={formData.image_preview || formData.image_url} className="w-full h-40 object-cover rounded-lg" alt="Preview" />
+                  <img src={formData.image_preview || getImageUrl(formData.image_url)} className="w-full h-40 object-cover rounded-lg" alt="Preview" />
                 </div>
               )}
             </div>
@@ -949,7 +977,7 @@ export default function WhyChooseSectionManager() {
           <div className="bg-gray-50 p-4 rounded-xl">
             <h3 className="font-semibold mb-3">Preview</h3>
             {(formData.image_preview || formData.image_url) && (
-              <img src={formData.image_preview || formData.image_url} className="rounded-lg mb-3 w-full h-64 object-cover" alt="Preview" />
+              <img src={formData.image_preview || getImageUrl(formData.image_url)} className="rounded-lg mb-3 w-full h-64 object-cover" alt="Preview" />
             )}
             <p className="text-amber-600 text-sm">{formData.title}</p>
             <h2 className="font-bold text-xl">{formData.subtitle || "Subtitle will appear here"}</h2>
@@ -957,10 +985,17 @@ export default function WhyChooseSectionManager() {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-3">
           <button onClick={handleCancel} className="px-4 py-2 border rounded-lg">Cancel</button>
-          <button onClick={saveSlide} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">
-            {editingSlide ? "Update Slide" : "Create Slide"}
+          <button onClick={saveSlide} disabled={uploading} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center justify-center gap-2">
+            {uploading ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent inline-block mr-2" />
+                Saving...
+              </>
+            ) : (
+              editingSlide ? "Update Slide" : "Create Slide"
+            )}
           </button>
         </div>
       </div>
@@ -969,8 +1004,8 @@ export default function WhyChooseSectionManager() {
 
   // List View
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Why Choose Slides</h2>
           <p className="text-sm text-gray-500">Manage your "Why Choose Luxury Garden Palace?" slider slides (4 slides recommended)</p>
@@ -1004,14 +1039,14 @@ export default function WhyChooseSectionManager() {
           const imageUrl = getImageUrl(slide.image_url);
           
           return (
-            <div key={slide.id} className="border rounded-lg p-4 flex gap-4 items-center bg-white">
-              <img src={imageUrl} alt={slide.subtitle} className="w-24 h-24 object-cover rounded" />
-              <div className="flex-1">
-                <h3 className="font-semibold">{slide.subtitle}</h3>
+            <div key={slide.id} className="border rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white">
+              <img src={imageUrl} alt={slide.subtitle} className="w-full sm:w-24 h-40 sm:h-24 object-cover rounded" />
+              <div className="flex-1 w-full">
+                <h3 className="font-semibold">{slide.subtitle || slide.title}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2">{slide.description}</p>
                 <p className="text-xs text-gray-400 mt-1">Order: {slide.display_order || index + 1} | ID: {slide.id}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap w-full sm:w-auto">
                 {index > 0 && (
                   <button onClick={() => moveSlide(index, "up")} className="p-2 border rounded hover:bg-gray-50" title="Move Up">
                     <ArrowUp size={16} />

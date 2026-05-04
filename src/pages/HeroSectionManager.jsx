@@ -9,7 +9,6 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
-  ArrowLeft,
 } from "lucide-react";
 
 // Use environment variables
@@ -36,10 +35,20 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
   }
 
   const response = await fetch(`${API_URL}${url}`, options);
+  
+  if (method === "GET" && response.status === 404) {
+    return { success: false, data: [] };
+  }
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API Error Response:", errorText);
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
   return await response.json();
 };
 
-// Helper function to get full image URL
 const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
@@ -75,7 +84,7 @@ export default function HeroSectionManager() {
   const fetchSlides = async () => {
     try {
       const result = await apiRequest("/wedding/slides", "GET");
-      if (result.success) {
+      if (result.success && result.data) {
         const sorted = result.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
         return sorted;
       }
@@ -271,8 +280,8 @@ export default function HeroSectionManager() {
     const previewImage = imagePreview || getImageUrl(editedSection?.image_url);
     
     return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold">{isNew ? "Add New Slide" : "Edit Slide"}</h2>
             <p className="text-sm text-gray-500">Upload an image from your computer for the hero slider</p>
@@ -282,8 +291,8 @@ export default function HeroSectionManager() {
           </button>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-4 bg-white p-6 rounded-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl">
             <div>
               <label className="block text-sm font-medium mb-1">Title</label>
               <input
@@ -346,9 +355,9 @@ export default function HeroSectionManager() {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-3">
           <button onClick={cancelEditSlide} className="px-4 py-2 border rounded-lg">Cancel</button>
-          <button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2">
+          <button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2 justify-center">
             {uploading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save size={15} />}
             {isNew ? "Create Slide" : "Update Slide"}
           </button>
@@ -358,17 +367,19 @@ export default function HeroSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Wedding Hero Slides</h2>
           <p className="text-sm text-gray-500">Manage your wedding hero slider images and content</p>
         </div>
+        {/* BEAUTIFUL CARD-STYLE BUTTON - UPDATED */}
         <button
           onClick={addNewSlide}
-          className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-amber-500/25 transition-all duration-200 hover:scale-[1.02] hover:from-amber-600 hover:to-amber-700 hover:shadow-lg"
         >
-          <Plus size={16} /> Add New Slide
+          <Plus size={16} />
+          Add New Slide
         </button>
       </div>
 
@@ -389,15 +400,15 @@ export default function HeroSectionManager() {
           const imageUrl = getImageUrl(slide.image_url);
             
           return (
-            <div key={slide.id} className="border rounded-lg p-4 flex gap-4 items-center">
-              <img src={imageUrl} alt={slide.title} className="w-24 h-24 object-cover rounded" />
-              <div className="flex-1">
+            <div key={slide.id} className="border rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white">
+              <img src={imageUrl} alt={slide.title} className="w-full sm:w-24 h-40 sm:h-24 object-cover rounded" />
+              <div className="flex-1 w-full">
                 <h3 className="font-semibold">{slide.title}</h3>
                 <p className="text-sm text-gray-500">{slide.subtitle}</p>
                 <p className="text-sm text-gray-600 line-clamp-2">{slide.description}</p>
-                <p className="text-xs text-gray-400 mt-1">Order: {slide.sort_order || index + 1}</p>
+                <p className="text-xs text-gray-400 mt-1">Order: {slide.sort_order || index + 1} | ID: {slide.id}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap w-full sm:w-auto">
                 {index > 0 && (
                   <button onClick={() => moveSlide(index, "up")} className="p-2 border rounded hover:bg-gray-50" title="Move Up">
                     <ArrowUp size={16} />

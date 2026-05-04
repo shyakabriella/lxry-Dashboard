@@ -101,7 +101,7 @@ export default function GalleryManager() {
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Gallery Manager</h1>
           <p className="text-sm text-slate-500">
@@ -156,7 +156,7 @@ export default function GalleryManager() {
       </div>
 
       {/* Uploader + Gallery */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Upload */}
         <div className="bg-white border rounded-xl p-6 space-y-4">

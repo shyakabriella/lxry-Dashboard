@@ -1,6 +1,6 @@
 function SectionTabs({ sectionLabels, activeSection, switchSection }) {
   return (
-    <div className="grid grid-cols-4 gap-1 rounded-xl border bg-slate-100 p-1">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl border bg-slate-100 p-1">
       {Object.entries(sectionLabels).map(([key, label]) => (
         <button
           key={key}

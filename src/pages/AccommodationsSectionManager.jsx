@@ -1035,25 +1035,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useState, useEffect } from "react";
 import {
   Save,
@@ -1065,8 +1046,8 @@ import {
 } from "lucide-react";
 
 // Use environment variables
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "http://127.0.0.1:8000/storage";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -1103,7 +1084,7 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
   return await response.json();
 };
 
-// Helper function to get full image URL
+// Helper function to get full image URL (fallback if backend doesn't return full URL)
 const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
@@ -1146,13 +1127,16 @@ export default function AccommodationsSectionManager() {
       
       if (result.success && result.data) {
         const data = result.data;
+        // Backend now returns full URL, but we use getImageUrl as fallback
+        const imageUrl = getImageUrl(data.image_url);
+        
         setSectionData({
           title: data.title || "Wedding Accommodations",
           subtitle: data.subtitle || "Luxury Guest Suites",
           description: data.description || "Provide your guests with elegant accommodations featuring modern amenities, comfortable furnishings, and beautiful views for an unforgettable wedding experience.",
           image_url: data.image_url || "",
           image_file: null,
-          image_preview: getImageUrl(data.image_url),
+          image_preview: imageUrl,
         });
         setSectionId(data.id);
         setHasChanges(false);
@@ -1240,7 +1224,8 @@ export default function AccommodationsSectionManager() {
     
     try {
       if (sectionId) {
-        result = await apiRequest(`/admin/wedding/section4/accommodations/${sectionId}`, "PUT", submitData, token, true);
+        submitData.append("_method", "PUT");
+        result = await apiRequest(`/admin/wedding/section4/accommodations/${sectionId}`, "POST", submitData, token, true);
       } else {
         result = await apiRequest("/admin/wedding/section4/accommodations", "POST", submitData, token, true);
       }
@@ -1456,10 +1441,10 @@ export default function AccommodationsSectionManager() {
                 placeholder="Or enter image URL"
               />
             </div>
-            {(sectionData.image_preview || sectionData.image_url) && (
+            {sectionData.image_preview && (
               <div className="mt-3 relative group">
                 <img 
-                  src={sectionData.image_preview || getImageUrl(sectionData.image_url)} 
+                  src={sectionData.image_preview} 
                   className="w-full h-40 object-cover rounded-lg border shadow-sm" 
                   alt="Preview"
                   onError={(e) => {
@@ -1489,14 +1474,22 @@ export default function AccommodationsSectionManager() {
           <h3 className="font-semibold text-lg mb-4">Live Preview</h3>
           
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-            {(sectionData.image_preview || sectionData.image_url) && (
+            {sectionData.image_preview && (
               <div className="relative h-64 overflow-hidden bg-gray-100">
                 <img 
-                  src={sectionData.image_preview || getImageUrl(sectionData.image_url)} 
+                  src={sectionData.image_preview} 
                   className="w-full h-full object-cover" 
                   alt="Preview"
                   onError={(e) => {
                     e.target.style.display = 'none';
+                    const parent = e.target.parentElement;
+                    if (parent) {
+                      const placeholder = document.createElement('div');
+                      placeholder.className = 'flex items-center justify-center h-full bg-gray-200 text-gray-500';
+                      placeholder.innerHTML = 'Image failed to load';
+                      parent.appendChild(placeholder);
+                      e.target.style.display = 'none';
+                    }
                   }}
                 />
               </div>

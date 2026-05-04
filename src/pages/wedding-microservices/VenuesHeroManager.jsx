@@ -1,15 +1,9 @@
 import { useState, useEffect } from "react";
-import {
-  Save,
-  RotateCcw,
-  Check,
-  AlertCircle,
-  Upload,
-  Trash2,
-} from "lucide-react";
+import { Save, RotateCcw, Check, AlertCircle, Upload, Trash2 } from "lucide-react";
 
 // Use environment variables
 const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "/storage";
 
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = {
@@ -30,36 +24,34 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
     }
   }
 
-  try {
-    const response = await fetch(`${API_URL}${url}`, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error Response:", errorText);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error("API Request Failed:", error);
-    throw error;
+  const response = await fetch(`${API_URL}${url}`, options);
+  
+  // For GET requests to section endpoints, don't throw on 404
+  if (method === "GET" && response.status === 404) {
+    return { success: false, message: "Not found" };
   }
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API Error Response:", errorText);
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return await response.json();
 };
 
-// Helper function to get full image URL - FALLBACK only
+// Helper function to get full image URL
 const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  if (path.startsWith('/storage')) return `${window.location.origin}${path}`;
-  return `${window.location.origin}/storage/${path}`;
+  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  return `${STORAGE_URL}/${path}`;
 };
 
-export default function PrimeApartmentSectionManager() {
+export default function VenuesHeroManager() {
   const [sectionData, setSectionData] = useState({
-    title: "Prime Luxury Apartment Living",
-    subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-    description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-    image_url: "",
+    title: "",
+    background_image: "",
     image_file: null,
     image_preview: null,
   });
@@ -85,33 +77,23 @@ export default function PrimeApartmentSectionManager() {
 
   const fetchSectionData = async () => {
     try {
-      const result = await apiRequest("/wedding/section3/apartment", "GET");
-      
-      console.log("Fetched data:", result);
+      const result = await apiRequest("/wedding-venues/hero", "GET");
       
       if (result.success && result.data) {
         const data = result.data;
-        
-        // Debug: Log the image_url from API
-        console.log("Image URL from API:", data.image_url);
-        
         setSectionData({
-          title: data.title || "Prime Luxury Apartment Living",
-          subtitle: data.subtitle || "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: data.description || "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: data.image_url || "",
+          title: data.title || "",
+          background_image: data.background_image || "",
           image_file: null,
-          image_preview: data.image_url || null,
+          image_preview: getImageUrl(data.background_image),
         });
         setSectionId(data.id);
         setHasChanges(false);
       } else {
         setSectionId(null);
         setSectionData({
-          title: "Prime Luxury Apartment Living",
-          subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: "",
+          title: "",
+          background_image: "",
           image_file: null,
           image_preview: null,
         });
@@ -151,7 +133,7 @@ export default function PrimeApartmentSectionManager() {
       ...sectionData,
       image_file: file,
       image_preview: URL.createObjectURL(file),
-      image_url: "",
+      background_image: "",
     });
     setHasChanges(true);
     setError(null);
@@ -162,25 +144,19 @@ export default function PrimeApartmentSectionManager() {
       setError("Title is required");
       return;
     }
-    if (!sectionData.subtitle) {
-      setError("Subtitle is required");
-      return;
-    }
-    if (!sectionData.description) {
-      setError("Description is required");
+    if (!sectionData.image_file && !sectionData.background_image) {
+      setError("Please upload an image or enter image URL");
       return;
     }
 
     const submitData = new FormData();
     submitData.append("title", sectionData.title);
-    submitData.append("subtitle", sectionData.subtitle);
-    submitData.append("description", sectionData.description);
 
     if (sectionData.image_file) {
-      submitData.append("image", sectionData.image_file);
+      submitData.append("background_image", sectionData.image_file);
       setUploadingImage(true);
-    } else if (sectionData.image_url && !sectionData.image_url.startsWith("blob:")) {
-      submitData.append("image_url", sectionData.image_url);
+    } else if (sectionData.background_image && !sectionData.background_image.startsWith("blob:")) {
+      submitData.append("background_image", sectionData.background_image);
     }
 
     let result;
@@ -188,12 +164,10 @@ export default function PrimeApartmentSectionManager() {
     try {
       if (sectionId) {
         submitData.append("_method", "PUT");
-        result = await apiRequest(`/admin/wedding/section3/apartment/${sectionId}`, "POST", submitData, token, true);
+        result = await apiRequest(`/admin/wedding-venues/hero/${sectionId}`, "POST", submitData, token, true);
       } else {
-        result = await apiRequest("/admin/wedding/section3/apartment", "POST", submitData, token, true);
+        result = await apiRequest("/admin/wedding-venues/hero", "POST", submitData, token, true);
       }
-
-      console.log("Save response:", result);
 
       if (result.success) {
         if (result.data.id) setSectionId(result.data.id);
@@ -230,14 +204,12 @@ export default function PrimeApartmentSectionManager() {
     setError(null);
 
     try {
-      const result = await apiRequest(`/admin/wedding/section3/apartment/${sectionId}`, "DELETE", null, token);
+      const result = await apiRequest(`/admin/wedding-venues/hero/${sectionId}`, "DELETE", null, token);
       
       if (result.success) {
         setSectionData({
-          title: "Prime Luxury Apartment Living",
-          subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-          description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-          image_url: "",
+          title: "",
+          background_image: "",
           image_file: null,
           image_preview: null,
         });
@@ -261,10 +233,8 @@ export default function PrimeApartmentSectionManager() {
       fetchSectionData();
     } else {
       setSectionData({
-        title: "Prime Luxury Apartment Living",
-        subtitle: "Discover Modern Apartments Designed For Comfort, Elegance And Everyday Living",
-        description: "Experience refined apartment living with premium finishes, serene surroundings, and thoughtful design. Our luxury apartments offer the perfect blend of comfort and sophistication for your wedding guests and family members.",
-        image_url: "",
+        title: "",
+        background_image: "",
         image_file: null,
         image_preview: null,
       });
@@ -294,13 +264,13 @@ export default function PrimeApartmentSectionManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold">Prime Luxury Apartment Living Section</h2>
-          <p className="text-sm text-gray-500">Edit the content for this section</p>
+          <h2 className="text-xl font-bold">Venues Hero Section</h2>
+          <p className="text-sm text-gray-500">Edit the hero banner content</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {sectionId && (
             <button 
               onClick={handleDelete}
@@ -352,42 +322,21 @@ export default function PrimeApartmentSectionManager() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left - Form */}
-        <div className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
+        <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl border shadow-sm">
           <div>
             <label className="block text-sm font-medium mb-1">Title *</label>
             <input
               value={sectionData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              placeholder="Title"
+              placeholder="Enter title"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Subtitle *</label>
-            <input
-              value={sectionData.subtitle}
-              onChange={(e) => handleInputChange("subtitle", e.target.value)}
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              placeholder="Subtitle"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Description *</label>
-            <textarea
-              value={sectionData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-              rows={4}
-              placeholder="Description"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
+            <label className="block text-sm font-medium mb-1">Background Image</label>
             <div className="flex gap-2 items-center">
               <label className="cursor-pointer bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2 text-sm">
                 <Upload size={16} />
@@ -400,8 +349,8 @@ export default function PrimeApartmentSectionManager() {
                 />
               </label>
               <input
-                value={sectionData.image_url && !sectionData.image_url.startsWith("blob:") ? sectionData.image_url : ""}
-                onChange={(e) => handleInputChange("image_url", e.target.value)}
+                value={sectionData.background_image && !sectionData.background_image.startsWith("blob:") ? sectionData.background_image : ""}
+                onChange={(e) => handleInputChange("background_image", e.target.value)}
                 className="flex-1 border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                 placeholder="Or enter image URL"
               />
@@ -413,7 +362,6 @@ export default function PrimeApartmentSectionManager() {
                   className="w-full h-40 object-cover rounded-lg border shadow-sm" 
                   alt="Preview"
                   onError={(e) => {
-                    console.error("Image failed to load:", sectionData.image_preview);
                     e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                   }}
                 />
@@ -421,7 +369,7 @@ export default function PrimeApartmentSectionManager() {
                   onClick={() => {
                     handleInputChange("image_file", null);
                     handleInputChange("image_preview", null);
-                    handleInputChange("image_url", "");
+                    handleInputChange("background_image", "");
                   }}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
                 >
@@ -430,16 +378,13 @@ export default function PrimeApartmentSectionManager() {
               </div>
             )}
             <p className="text-xs text-gray-500 mt-2">
-              Recommended: 800x600px, max 5MB. Supports JPEG, PNG, WebP, GIF
-            </p>
-            <p className="text-xs text-amber-600 mt-1">
-              Current image URL: {sectionData.image_url || "None"}
+              Recommended: 1920x1080px, max 5MB. Supports JPEG, PNG, WebP, GIF
             </p>
           </div>
         </div>
 
         {/* Right - Live Preview */}
-        <div className="bg-gray-50 p-6 rounded-xl border shadow-sm">
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl border shadow-sm">
           <h3 className="font-semibold text-lg mb-4">Live Preview</h3>
           
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
@@ -450,23 +395,27 @@ export default function PrimeApartmentSectionManager() {
                   className="w-full h-full object-cover" 
                   alt="Preview"
                   onError={(e) => {
-                    console.error("Preview image failed to load:", sectionData.image_preview);
                     e.target.style.display = 'none';
+                    const parent = e.target.parentElement;
+                    if (parent) {
+                      const placeholder = document.createElement('div');
+                      placeholder.className = 'flex items-center justify-center h-full bg-gray-200 text-gray-500';
+                      placeholder.innerHTML = 'Image failed to load';
+                      parent.appendChild(placeholder);
+                      e.target.style.display = 'none';
+                    }
                   }}
                 />
               </div>
             )}
             
             <div className="p-6">
-              <h2 className="font-bold text-2xl text-gray-800 mb-2">
-                {sectionData.title}
+              <p className="text-[13px] uppercase tracking-[0.2em] text-amber-600 font-medium">
+                Hero Section
+              </p>
+              <h2 className="font-bold text-2xl text-gray-800 mt-2 mb-3">
+                {sectionData.title || "No title saved"}
               </h2>
-              <p className="text-amber-600 text-sm font-medium mb-4">
-                {sectionData.subtitle}
-              </p>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {sectionData.description}
-              </p>
             </div>
           </div>
         </div>

@@ -100,7 +100,7 @@ export default function MeetingManager() {
       <div className="space-y-6">
 
         {/* HEADER */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
               Meeting homepage Content
@@ -138,7 +138,7 @@ export default function MeetingManager() {
         </div>
 
         {/* TABS */}
-        <div className="grid grid-cols-4 gap-1 rounded-xl border bg-slate-100 p-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl border bg-slate-100 p-1">
           {Object.entries(sectionLabels).map(([key, label]) => (
             <button
               key={key}
@@ -152,10 +152,10 @@ export default function MeetingManager() {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
           {/* LEFT SIDE */}
-          <div className="lg:col-span-3 space-y-4 bg-white p-6 rounded-xl">
+          <div className="lg:col-span-3 space-y-4 bg-white p-4 sm:p-6 rounded-xl">
 
             {/* HERO */}
             {isHero &&
@@ -363,7 +363,7 @@ export default function MeetingManager() {
           </div>
 
           {/* RIGHT SIDE */}
-          <div className="lg:col-span-2 bg-white p-4 rounded-xl">
+          <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl">
             <h3 className="font-bold text-lg">
               {editedSection.title || "Preview"}
             </h3>

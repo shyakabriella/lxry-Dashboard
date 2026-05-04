@@ -1,364 +1,112 @@
-import { useEffect, useState } from "react";
-import { loadSiteData, saveSiteData } from "../../data/store";
-import { Save, RotateCcw, Check } from "lucide-react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import {
+  Sparkles,
+  Gift,
+  Diamond,
+  Crown,
+  List,
+  Martini,
+  ArrowLeft,
+} from "lucide-react";
+import BackToWeddingButton from "../../components/BackToWeddingButton";
 
-const sectionLabels = {
-  hero: "Packages Hero",
-  wedding_packages: "Wedding Packages",
-  classic_package: "Classic Package",
-  premium_package: "Premium Package",
-  included_benefits: "Included Benefits",
-  bar_packages: "Bar Packages",
-};
-
-const emptyState = {
-  title: "",
-  subtitle: "",
-  imageUrl: "",
-  items: [],
-  blocks: [],
-};
+const sectionCards = [
+  {
+    key: "hero",
+    label: "Packages Hero",
+    description: "Main hero banner for wedding packages",
+    path: "/admin/wedding-packages/hero",
+    icon: Sparkles,
+  },
+  {
+    key: "wedding-packages",
+    label: "Wedding Packages",
+    description: "Manage wedding packages section",
+    path: "/admin/wedding-packages/wedding-packages",
+    icon: Gift,
+  },
+  {
+    key: "classic",
+    label: "Classic Package",
+    description: "Manage classic wedding package details",
+    path: "/admin/wedding-packages/classic",
+    icon: Diamond,
+  },
+  {
+    key: "premium",
+    label: "Premium Package",
+    description: "Manage premium wedding package details",
+    path: "/admin/wedding-packages/premium",
+    icon: Crown,
+  },
+  {
+    key: "benefits",
+    label: "Benefits",
+    description: "Manage included benefits list",
+    path: "/admin/wedding-packages/benefits",
+    icon: List,
+  },
+  {
+    key: "bar",
+    label: "Bar Packages",
+    description: "Manage bar packages section",
+    path: "/admin/wedding-packages/bar",
+    icon: Martini,
+  },
+];
 
 export default function WeddingPackagesManagerMicroService() {
-  const [data, setData] = useState(null);
-  const [activeSection, setActiveSection] = useState("hero");
-  const [editedSection, setEditedSection] = useState(null);
-  const [saved, setSaved] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const location = useLocation();
+  const isChildRoute = location.pathname !== "/admin/wedding-packages";
 
-  useEffect(() => {
-    const siteData = loadSiteData();
-
-    const initial =
-      siteData?.weddingPackages?.[activeSection] || emptyState;
-
-    setData(siteData);
-    setEditedSection({ ...initial });
-  }, []);
-
-  const switchSection = (key) => {
-    if (hasChanges && !confirm("Discard changes?")) return;
-
-    const next =
-      data?.weddingPackages?.[key] || emptyState;
-
-    setActiveSection(key);
-    setEditedSection({ ...next });
-    setHasChanges(false);
-    setSaved(false);
-  };
-
-  const updateField = (field, value) => {
-    setEditedSection((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setHasChanges(true);
-    setSaved(false);
-  };
-
-  const updateArrayField = (field, index, value) => {
-    const arr = editedSection[field] ? [...editedSection[field]] : [];
-    arr[index] = value;
-    updateField(field, arr);
-  };
-
-  const handleSave = () => {
-    const updated = {
-      ...data,
-      weddingPackages: {
-        ...data.weddingPackages,
-        [activeSection]: editedSection,
-      },
-    };
-
-    saveSiteData(updated);
-    setData(updated);
-    setHasChanges(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const handleReset = () => {
-    const defaultData = loadSiteData();
-    const reset =
-      defaultData?.weddingPackages?.[activeSection] || emptyState;
-
-    setEditedSection({ ...reset });
-    setHasChanges(true);
-  };
-
-  if (!data || !editedSection) {
+  if (isChildRoute) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+      <div className="space-y-6">
+        <Link
+          to="/admin/wedding-packages"
+          className="group inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-all hover:border-amber-300 hover:text-amber-600"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          Back to Wedding Packages
+        </Link>
+        <Outlet />
       </div>
     );
   }
 
-  const isHero = activeSection === "hero";
-  const isWeddingPackages = activeSection === "wedding_packages";
-  const isClassic = activeSection === "classic_package";
-  const isPremium = activeSection === "premium_package";
-  const isBenefits = activeSection === "included_benefits";
-  const isBar = activeSection === "bar_packages";
-
   return (
-    <section className="mt-10 space-y-6">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h2 className="font-bold">Wedding Packages</h2>
-
-        <div className="flex gap-2">
-          {saved && (
-            <span className="text-green-600 flex items-center gap-1">
-              <Check size={14} />
-              Saved
-            </span>
-          )}
-
-          <button
-            onClick={handleReset}
-            className="border px-3 py-1 rounded flex items-center gap-1"
-          >
-            <RotateCcw size={14} />
-            Reset
-          </button>
-
-          <button
-            onClick={handleSave}
-            disabled={!hasChanges}
-            className="bg-amber-500 text-white px-3 py-1 rounded flex items-center gap-1 disabled:opacity-50"
-          >
-            <Save size={14} />
-            Save
-          </button>
-        </div>
+    <div className="space-y-6">
+      <BackToWeddingButton />
+      
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-slate-800">Wedding Packages</h2>
+        <p className="text-sm text-slate-500 mt-1">Select a section to manage its content</p>
       </div>
 
-      {/* TABS */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-1 bg-gray-100 p-1 rounded">
-        {Object.entries(sectionLabels).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => switchSection(key)}
-            className={`text-xs p-2 rounded ${
-              activeSection === key ? "bg-white shadow" : ""
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* BODY */}
-      <div className="grid lg:grid-cols-5 gap-6">
-
-        {/* LEFT */}
-        <div className="lg:col-span-3 space-y-4 bg-white p-6 rounded-xl">
-
-          {/* HERO */}
-          {isHero && (
-            <>
-              <input
-                value={editedSection.title || ""}
-                onChange={(e) => updateField("title", e.target.value)}
-                placeholder="Title"
-                className="w-full border p-2 rounded"
-              />
-
-              <input
-                value={editedSection.imageUrl || ""}
-                onChange={(e) => updateField("imageUrl", e.target.value)}
-                placeholder="Image URL"
-                className="w-full border p-2 rounded"
-              />
-            </>
-          )}
-
-          {/* SIMPLE */}
-          {isWeddingPackages && (
-            <>
-              <input
-                value={editedSection.title || ""}
-                onChange={(e) => updateField("title", e.target.value)}
-                placeholder="Title"
-                className="w-full border p-2 rounded"
-              />
-
-              <input
-                value={editedSection.subtitle || ""}
-                onChange={(e) => updateField("subtitle", e.target.value)}
-                placeholder="Subtitle"
-                className="w-full border p-2 rounded"
-              />
-            </>
-          )}
-
-          {/* CLASSIC (6 ITEMS) */}
-          {isClassic && (
-            <>
-              <input
-                value={editedSection.title || ""}
-                onChange={(e) => updateField("title", e.target.value)}
-                placeholder="Title"
-                className="w-full border p-2 rounded"
-              />
-
-              <input
-                value={editedSection.imageUrl || ""}
-                onChange={(e) => updateField("imageUrl", e.target.value)}
-                placeholder="Image URL"
-                className="w-full border p-2 rounded"
-              />
-
-              {Array.from({ length: 6 }).map((_, i) => (
-                <input
-                  key={i}
-                  value={editedSection.items?.[i] || ""}
-                  onChange={(e) =>
-                    updateArrayField("items", i, e.target.value)
-                  }
-                  placeholder={`Feature ${i + 1}`}
-                  className="w-full border p-2 rounded"
-                />
-              ))}
-            </>
-          )}
-
-          {/* PREMIUM (7 ITEMS) */}
-          {isPremium && (
-            <>
-              <input
-                value={editedSection.title || ""}
-                onChange={(e) => updateField("title", e.target.value)}
-                placeholder="Title"
-                className="w-full border p-2 rounded"
-              />
-
-              <input
-                value={editedSection.imageUrl || ""}
-                onChange={(e) => updateField("imageUrl", e.target.value)}
-                placeholder="Image URL"
-                className="w-full border p-2 rounded"
-              />
-
-              {Array.from({ length: 7 }).map((_, i) => (
-                <input
-                  key={i}
-                  value={editedSection.items?.[i] || ""}
-                  onChange={(e) =>
-                    updateArrayField("items", i, e.target.value)
-                  }
-                  placeholder={`Feature ${i + 1}`}
-                  className="w-full border p-2 rounded"
-                />
-              ))}
-            </>
-          )}
-
-          {/* INCLUDED BENEFITS (15 ITEMS) */}
-          {isBenefits &&
-            Array.from({ length: 15 }).map((_, i) => (
-              <input
-                key={i}
-                value={editedSection.items?.[i] || ""}
-                onChange={(e) =>
-                  updateArrayField("items", i, e.target.value)
-                }
-                placeholder={`Benefit ${i + 1}`}
-                className="w-full border p-2 rounded"
-              />
-            ))}
-
-          {/* BAR PACKAGES (7 BLOCKS) */}
-          {isBar &&
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="border p-3 rounded space-y-2">
-
-                {/* TITLE */}
-                <input
-                  value={editedSection.blocks?.[i]?.title || ""}
-                  onChange={(e) => {
-                    const blocks = editedSection.blocks || [];
-                    blocks[i] = {
-                      ...blocks[i],
-                      title: e.target.value,
-                    };
-                    updateField("blocks", blocks);
-                  }}
-                  placeholder={`Block ${i + 1} Title`}
-                  className="w-full border p-2 rounded"
-                />
-
-                {/* IMAGE */}
-                <input
-                  value={editedSection.blocks?.[i]?.imageUrl || ""}
-                  onChange={(e) => {
-                    const blocks = editedSection.blocks || [];
-                    blocks[i] = {
-                      ...blocks[i],
-                      imageUrl: e.target.value,
-                    };
-                    updateField("blocks", blocks);
-                  }}
-                  placeholder={`Block ${i + 1} Image URL`}
-                  className="w-full border p-2 rounded"
-                />
-
-                {/* 4 ITEMS */}
-                {Array.from({ length: 4 }).map((_, j) => (
-                  <input
-                    key={j}
-                    value={editedSection.blocks?.[i]?.items?.[j] || ""}
-                    onChange={(e) => {
-                      const blocks = editedSection.blocks || [];
-                      const items = blocks[i]?.items || [];
-
-                      items[j] = e.target.value;
-
-                      blocks[i] = {
-                        ...blocks[i],
-                        items,
-                      };
-
-                      updateField("blocks", blocks);
-                    }}
-                    placeholder={`Item ${j + 1}`}
-                    className="w-full border p-2 rounded"
-                  />
-                ))}
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {sectionCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link
+              key={card.key}
+              to={card.path}
+              className="group flex flex-col items-start gap-3 rounded-xl border border-slate-200 bg-white p-5 transition-all duration-200 min-h-[140px] w-full text-left hover:border-amber-300 hover:shadow-md"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 transition-all duration-200 group-hover:bg-amber-100">
+                <Icon className="h-5 w-5 text-slate-500 transition-all duration-200 group-hover:text-amber-600" />
               </div>
-            ))}
-        </div>
-
-        {/* RIGHT PREVIEW */}
-        <div className="lg:col-span-2 bg-white p-4 rounded-xl">
-
-          {editedSection.imageUrl ? (
-            <img
-              src={editedSection.imageUrl}
-              className="rounded mb-3 w-full h-52 object-cover"
-            />
-          ) : (
-            <div className="w-full h-52 flex items-center justify-center bg-gray-100 rounded mb-3 text-sm text-gray-400">
-              No image set
-            </div>
-          )}
-
-          <h3 className="font-bold text-lg">
-            {editedSection.title || "No title"}
-          </h3>
-
-          {editedSection.subtitle && (
-            <p className="text-sm text-gray-500">
-              {editedSection.subtitle}
-            </p>
-          )}
-        </div>
+              <div className="flex-1 w-full">
+                <h3 className="text-base font-semibold text-slate-800">{card.label}</h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{card.description}</p>
+                <div className="mt-3 flex items-center gap-1 transition-all duration-200 group-hover:gap-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-amber-500">Manage section</span>
+                  <span className="text-amber-400 text-xs transition-all duration-200 group-hover:translate-x-0.5">→</span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
-    </section>
+    </div>
   );
 }
