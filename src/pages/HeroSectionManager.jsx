@@ -9,275 +9,43 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
-<<<<<<< HEAD
-=======
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
-  Heart,
-  Building2,
-  MapPin,
-  Images,
-  BadgeCheck,
-  Layers,
-  Home,
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
 } from "lucide-react";
 
-const API_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api"
-).replace(/\/$/, "");
-
+const API_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
 const APP_URL = API_URL.replace(/\/api$/, "");
-
-const STORAGE_URL = (
-  import.meta.env.VITE_STORAGE_URL || `${APP_URL}/storage`
-).replace(/\/$/, "");
-
-const weddingSections = [
-  {
-    key: "hero",
-    title: "Wedding Hero Slides",
-    subtitle: "Manage wedding hero slider images and content.",
-    badge: "Hero",
-    icon: Sparkles,
-  },
-  {
-    key: "special-day",
-    title: "Envision Your Special Day Section",
-    subtitle: "Manage special day introduction content.",
-    badge: "#1",
-    icon: Heart,
-  },
-  {
-    key: "services",
-    title: "Wedding Services Section",
-    subtitle: "Manage wedding service details.",
-    badge: "#2",
-    icon: Layers,
-  },
-  {
-    key: "why-choose",
-    title: "Why Choose Luxury Garden Palace Section",
-    subtitle: "Manage reasons and benefits.",
-    badge: "#3",
-    icon: BadgeCheck,
-  },
-  {
-    key: "apartment",
-    title: "Prime Luxury Apartment Living Section",
-    subtitle: "Manage luxury apartment content.",
-    badge: "#4",
-    icon: Home,
-  },
-  {
-    key: "accommodations",
-    title: "Wedding Room Blocks Section",
-    subtitle: "Manage wedding accommodation and room block content.",
-    badge: "#5",
-    icon: Building2,
-  },
-  {
-    key: "location",
-    title: "Location Section",
-    subtitle: "Manage wedding location content.",
-    badge: "#6",
-    icon: MapPin,
-  },
-  {
-    key: "multiple-images",
-    title: "Wedding Gallery Section",
-    subtitle: "Manage wedding gallery images.",
-    badge: "#7",
-    icon: Images,
-  },
-];
+const STORAGE_URL = (import.meta.env.VITE_STORAGE_URL || `${APP_URL}/storage`).replace(/\/$/, "");
 
 const getErrorMessage = (data, fallback = "Something went wrong") => {
   if (!data) return fallback;
-
-  if (data.errors) {
-    return Object.values(data.errors).flat().join(", ");
-  }
-
+  if (data.errors) return Object.values(data.errors).flat().join(", ");
   return data.message || data.error || fallback;
 };
 
-const apiRequest = async (
-  url,
-  method = "GET",
-  body = null,
-  token = null,
-  isFormData = false
-) => {
-  const options = {
-    method,
-    headers: {
-      Accept: "application/json",
-    },
-  };
-
-  if (token) {
-    options.headers.Authorization = `Bearer ${token}`;
-  }
-
+const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
+  const options = { method, headers: { Accept: "application/json" } };
+  if (token) options.headers.Authorization = `Bearer ${token}`;
   if (body) {
-    if (isFormData) {
-      options.body = body;
-    } else {
+    if (isFormData) options.body = body;
+    else {
       options.headers["Content-Type"] = "application/json";
       options.body = JSON.stringify(body);
     }
   }
-
   const response = await fetch(`${API_URL}${url}`, options);
-<<<<<<< HEAD
-  
-  if (method === "GET" && response.status === 404) {
-    return { success: false, data: [] };
-  }
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error Response:", errorText);
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-  
+  if (method === "GET" && response.status === 404) return { success: false, data: [] };
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   return await response.json();
-=======
-  const text = await response.text();
-
-  let data = {};
-
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch (error) {
-    console.error("Backend returned non-JSON response:");
-    console.error(text);
-
-    throw new Error(
-      `Server returned non-JSON response. Status: ${response.status}. Check Laravel log.`
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      getErrorMessage(data, `Request failed with status ${response.status}`)
-    );
-  }
-
-  return data;
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
 };
 
 const getImageUrl = (path) => {
   if (!path) return null;
-
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
-
-  if (path.startsWith("/storage/")) {
-    return `${APP_URL}${path}`;
-  }
-
-  if (path.startsWith("storage/")) {
-    return `${APP_URL}/${path}`;
-  }
-
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (path.startsWith("/storage/")) return `${APP_URL}${path}`;
+  if (path.startsWith("storage/")) return `${APP_URL}/${path}`;
   return `${STORAGE_URL}/${path}`;
 };
 
-function WeddingSectionCard({ section, active, onClick }) {
-  const Icon = section.icon;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group rounded-2xl border p-5 text-left shadow-sm transition-all duration-200 ${
-        active
-          ? "border-orange-300 bg-white shadow-md ring-2 ring-orange-100"
-          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
-      }`}
-    >
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            active ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"
-          }`}
-        >
-          <Icon size={22} />
-        </div>
-
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            active
-              ? "bg-orange-100 text-orange-700"
-              : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          {section.badge}
-        </span>
-      </div>
-
-      <h3 className="text-[15px] font-bold text-slate-900">
-        {section.title}
-      </h3>
-
-      <p className="mt-2 min-h-[38px] text-sm leading-6 text-slate-500">
-        {section.subtitle}
-      </p>
-
-      <div
-        className={`mt-5 inline-flex items-center gap-2 text-sm font-semibold ${
-          active ? "text-orange-600" : "text-orange-500"
-        }`}
-      >
-        Manage Section
-        <ArrowRight
-          size={16}
-          className="transition-transform group-hover:translate-x-1"
-        />
-      </div>
-    </button>
-  );
-}
-
-function ComingSoonSection({ section, onBack }) {
-  const Icon = section.icon;
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <div className="mx-auto max-w-2xl text-center">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
-          <Icon size={30} />
-        </div>
-
-        <h2 className="text-2xl font-bold text-slate-900">
-          {section.title}
-        </h2>
-
-        <p className="mt-3 text-sm leading-7 text-slate-500">
-          This section is grouped under the wedding management area. You can
-          connect this card to its own manager component or API page.
-        </p>
-
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
-        >
-          <ArrowLeft size={16} />
-          Back to Wedding Hero Slides
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function HeroSectionManager() {
-  const [activeSection, setActiveSection] = useState("hero");
   const [editedSection, setEditedSection] = useState(null);
   const [saved, setSaved] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -291,40 +59,18 @@ export default function HeroSectionManager() {
   const [imagePreview, setImagePreview] = useState(null);
   const [slides, setSlides] = useState([]);
 
-  const selectedSection =
-    weddingSections.find((section) => section.key === activeSection) ||
-    weddingSections[0];
-
   useEffect(() => {
-    const storedToken =
-      localStorage.getItem("token") ||
-      localStorage.getItem("auth_token") ||
-      localStorage.getItem("authToken");
-
-    if (storedToken) {
-      setToken(storedToken);
-    } else {
-      setError("Please login first");
-      setLoading(false);
-    }
+    const storedToken = localStorage.getItem("token") || localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+    if (storedToken) setToken(storedToken);
+    else setError("Please login first");
   }, []);
 
   const fetchSlides = async () => {
     try {
       const result = await apiRequest("/wedding/slides", "GET");
-<<<<<<< HEAD
       if (result.success && result.data) {
-        const sorted = result.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-        return sorted;
-=======
-
-      if (result.success && Array.isArray(result.data)) {
-        return [...result.data].sort(
-          (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
-        );
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
+        return result.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       }
-
       return [];
     } catch (err) {
       console.error("Fetch slides error:", err);
@@ -335,14 +81,9 @@ export default function HeroSectionManager() {
 
   const loadSlides = async () => {
     setListLoading(true);
-
     const fetchedSlides = await fetchSlides();
-
     setSlides(fetchedSlides);
-    setEditedSection({
-      images: fetchedSlides.map((slide) => slide.image_url),
-    });
-
+    setEditedSection({ images: fetchedSlides.map((slide) => slide.image_url) });
     setListLoading(false);
   };
 
@@ -353,17 +94,12 @@ export default function HeroSectionManager() {
         await loadSlides();
         setLoading(false);
       };
-
       loadData();
     }
   }, [token]);
 
   const updateField = (field, value) => {
-    setEditedSection((previous) => ({
-      ...(previous || {}),
-      [field]: value,
-    }));
-
+    setEditedSection((prev) => ({ ...(prev || {}), [field]: value }));
     setHasChanges(true);
     setSaved(false);
     setError(null);
@@ -373,150 +109,88 @@ export default function HeroSectionManager() {
     setEditingSlideIndex(-1);
     setSelectedFile(null);
     setImagePreview(null);
+    setEditedSection({ title: "", subtitle: "", description: "", image_url: "", sort_order: slides.length + 1 });
+    setHasChanges(true);
     setError(null);
     setSaved(false);
-
-    setEditedSection({
-      title: "",
-      subtitle: "",
-      description: "",
-      image_url: "",
-      sort_order: slides.length + 1,
-    });
-
-    setHasChanges(true);
   };
 
   const editSlide = (index) => {
     setEditingSlideIndex(index);
     setSelectedFile(null);
     setImagePreview(null);
-    setError(null);
-    setSaved(false);
     setEditedSection({ ...slides[index] });
     setHasChanges(false);
+    setError(null);
+    setSaved(false);
   };
 
   const cancelEditSlide = () => {
     setEditingSlideIndex(null);
     setSelectedFile(null);
     setImagePreview(null);
-    setError(null);
-
-    setEditedSection({
-      images: slides.map((slide) => slide.image_url),
-    });
-
+    setEditedSection({ images: slides.map((slide) => slide.image_url) });
     setHasChanges(false);
+    setError(null);
   };
 
   const handleFileSelect = (event) => {
     const file = event.target.files?.[0];
-
     if (!file) return;
-
-    const validTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "image/webp",
-      "image/gif",
-    ];
-
+    const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp", "image/gif"];
     if (!validTypes.includes(file.type)) {
       setError("Please select a valid image: JPEG, PNG, WebP, or GIF");
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       setError("Image size must be less than 5MB");
       return;
     }
-
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setSelectedFile(file);
     setImagePreview(URL.createObjectURL(file));
-    setError(null);
     setHasChanges(true);
+    setError(null);
     setSaved(false);
   };
 
   const saveSlide = async () => {
     setUploading(true);
     setError(null);
-
     try {
       const isNew = editingSlideIndex === -1;
-
       if (!editedSection?.title?.trim()) {
         setError("Title is required");
         return;
       }
-
       if (isNew && !selectedFile) {
         setError("Image is required when creating a new slide");
         return;
       }
-
       const formData = new FormData();
-
       formData.append("title", editedSection.title || "");
       formData.append("subtitle", editedSection.subtitle || "");
       formData.append("description", editedSection.description || "");
-      formData.append(
-        "sort_order",
-        editedSection.sort_order || slides.length + 1
-      );
-
-      if (selectedFile) {
-        formData.append("image", selectedFile);
-      }
-
+      formData.append("sort_order", editedSection.sort_order || slides.length + 1);
+      if (selectedFile) formData.append("image", selectedFile);
       let result;
-
       if (isNew) {
-        result = await apiRequest(
-          "/admin/wedding/slides",
-          "POST",
-          formData,
-          token,
-          true
-        );
+        result = await apiRequest("/admin/wedding/slides", "POST", formData, token, true);
       } else {
         const slideId = slides[editingSlideIndex]?.id;
-
-        if (!slideId) {
-          setError("Slide ID not found");
-          return;
-        }
-
+        if (!slideId) { setError("Slide ID not found"); return; }
         formData.append("_method", "PUT");
-
-        result = await apiRequest(
-          `/admin/wedding/slides/${slideId}`,
-          "POST",
-          formData,
-          token,
-          true
-        );
+        result = await apiRequest(`/admin/wedding/slides/${slideId}`, "POST", formData, token, true);
       }
-
       if (result.success) {
         const freshSlides = await fetchSlides();
-
         setSlides(freshSlides);
         setEditingSlideIndex(null);
         setSelectedFile(null);
         setImagePreview(null);
-        setEditedSection({
-          images: freshSlides.map((slide) => slide.image_url),
-        });
+        setEditedSection({ images: freshSlides.map((slide) => slide.image_url) });
         setHasChanges(false);
         setSaved(true);
-
         setTimeout(() => setSaved(false), 2500);
       } else {
         setError(getErrorMessage(result, "Error saving slide"));
@@ -531,33 +205,15 @@ export default function HeroSectionManager() {
 
   const deleteSlide = async (index) => {
     const slide = slides[index];
-
-    if (!slide?.id) {
-      setError("Slide ID not found");
-      return;
-    }
-
+    if (!slide?.id) { setError("Slide ID not found"); return; }
     if (!confirm("Delete this slide?")) return;
-
-    setError(null);
-
     try {
-      const result = await apiRequest(
-        `/admin/wedding/slides/${slide.id}`,
-        "DELETE",
-        null,
-        token
-      );
-
+      const result = await apiRequest(`/admin/wedding/slides/${slide.id}`, "DELETE", null, token);
       if (result.success) {
         const freshSlides = await fetchSlides();
-
         setSlides(freshSlides);
-        setEditedSection({
-          images: freshSlides.map((slideItem) => slideItem.image_url),
-        });
+        setEditedSection({ images: freshSlides.map((slide) => slide.image_url) });
         setSaved(true);
-
         setTimeout(() => setSaved(false), 2500);
       } else {
         setError(getErrorMessage(result, "Error deleting slide"));
@@ -570,48 +226,28 @@ export default function HeroSectionManager() {
 
   const moveSlide = async (index, direction) => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
-
     if (newIndex < 0 || newIndex >= slides.length) return;
-
-    setError(null);
     setListLoading(true);
-
     try {
       const newSlides = [...slides];
-
-      const temp = newSlides[index];
-      newSlides[index] = newSlides[newIndex];
-      newSlides[newIndex] = temp;
-
+      [newSlides[index], newSlides[newIndex]] = [newSlides[newIndex], newSlides[index]];
       setSlides(newSlides);
-
       for (let i = 0; i < newSlides.length; i++) {
-        await apiRequest(
-          `/admin/wedding/slides/${newSlides[i].id}`,
-          "PUT",
-          {
-            title: newSlides[i].title,
-            subtitle: newSlides[i].subtitle,
-            description: newSlides[i].description,
-            sort_order: i + 1,
-          },
-          token
-        );
+        await apiRequest(`/admin/wedding/slides/${newSlides[i].id}`, "PUT", {
+          title: newSlides[i].title,
+          subtitle: newSlides[i].subtitle,
+          description: newSlides[i].description,
+          sort_order: i + 1,
+        }, token);
       }
-
       const freshSlides = await fetchSlides();
-
       setSlides(freshSlides);
-      setEditedSection({
-        images: freshSlides.map((slide) => slide.image_url),
-      });
+      setEditedSection({ images: freshSlides.map((slide) => slide.image_url) });
       setSaved(true);
-
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       console.error("Move slide error:", err);
       setError(err.message || "Something went wrong while moving slide");
-
       const freshSlides = await fetchSlides();
       setSlides(freshSlides);
     } finally {
@@ -619,17 +255,9 @@ export default function HeroSectionManager() {
     }
   };
 
-  const handleSave = () => {
-    if (editingSlideIndex !== null) {
-      saveSlide();
-    }
-  };
-
+  const handleSave = () => { if (editingSlideIndex !== null) saveSlide(); };
   const handleReset = () => {
-    setEditedSection({
-      images: slides.map((slide) => slide.image_url),
-    });
-
+    setEditedSection({ images: slides.map((slide) => slide.image_url) });
     setEditingSlideIndex(null);
     setSelectedFile(null);
     setImagePreview(null);
@@ -639,11 +267,7 @@ export default function HeroSectionManager() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" /></div>;
   }
 
   if (!token) {
@@ -651,15 +275,8 @@ export default function HeroSectionManager() {
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-
-          <h2 className="text-xl font-semibold text-slate-900">
-            Authentication Required
-          </h2>
-
-          <p className="mt-2 text-slate-500">
-            Please login to manage wedding content.
-          </p>
-
+          <h2 className="text-xl font-semibold text-slate-900">Authentication Required</h2>
+          <p className="mt-2 text-slate-500">Please login to manage wedding content.</p>
           {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         </div>
       </div>
@@ -669,232 +286,62 @@ export default function HeroSectionManager() {
   if (editingSlideIndex !== null) {
     const isNew = editingSlideIndex === -1;
     const previewImage = imagePreview || getImageUrl(editedSection?.image_url);
-
     return (
-<<<<<<< HEAD
       <div className="space-y-6 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold">{isNew ? "Add New Slide" : "Edit Slide"}</h2>
             <p className="text-sm text-gray-500">Upload an image from your computer for the hero slider</p>
           </div>
-          <button onClick={cancelEditSlide} className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-            Cancel
-=======
-      <div className="space-y-6 p-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <button
-            type="button"
-            onClick={cancelEditSlide}
-            className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900"
-          >
-            <ArrowLeft size={16} />
-            Back to Wedding Hero Slides
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
-          </button>
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                {isNew ? "Add New Wedding Slide" : "Edit Wedding Slide"}
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Upload an image from your computer for the wedding hero slider.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={cancelEditSlide}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-          </div>
+          <button onClick={cancelEditSlide} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
         </div>
 
-<<<<<<< HEAD
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl">
-=======
-        {error && (
-          <div className="flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-600">
-            <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {saved && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600">
-            <Check size={16} />
-            Saved successfully!
-          </div>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
+          <div className="space-y-4 bg-white p-4 sm:p-6 rounded-xl border">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-800">
-                Title <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                value={editedSection?.title || ""}
-                onChange={(event) => updateField("title", event.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                placeholder="e.g. Exclusive Wedding Experience"
-              />
+              <label className="mb-1 block text-sm font-semibold text-slate-800">Title <span className="text-red-500">*</span></label>
+              <input value={editedSection?.title || ""} onChange={(e) => updateField("title", e.target.value)} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" placeholder="e.g. Exclusive Wedding Experience" />
             </div>
-
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-800">
-                Subtitle
-              </label>
-
-              <input
-                value={editedSection?.subtitle || ""}
-                onChange={(event) =>
-                  updateField("subtitle", event.target.value)
-                }
-                className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                placeholder="e.g. Luxury Wedding Venue"
-              />
+              <label className="mb-1 block text-sm font-semibold text-slate-800">Subtitle</label>
+              <input value={editedSection?.subtitle || ""} onChange={(e) => updateField("subtitle", e.target.value)} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" placeholder="e.g. Luxury Wedding Venue" />
             </div>
-
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-800">
-                Description
-              </label>
-
-              <textarea
-                value={editedSection?.description || ""}
-                onChange={(event) =>
-                  updateField("description", event.target.value)
-                }
-                className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                rows={4}
-                placeholder="Enter description"
-              />
+              <label className="mb-1 block text-sm font-semibold text-slate-800">Description</label>
+              <textarea value={editedSection?.description || ""} onChange={(e) => updateField("description", e.target.value)} rows={4} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" placeholder="Enter description" />
             </div>
-
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-800">
-                Image {isNew && <span className="text-red-500">*</span>}
-              </label>
-
+              <label className="mb-1 block text-sm font-semibold text-slate-800">Image {isNew && <span className="text-red-500">*</span>}</label>
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600">
-                <Upload size={16} />
-                Select Image from Computer
-
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
+                <Upload size={16} /> Select Image from Computer
+                <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
               </label>
-
-              {selectedFile && (
-                <p className="mt-2 text-xs text-emerald-600">
-                  Selected: {selectedFile.name}
-                </p>
-              )}
-
-              {!isNew && !selectedFile && (
-                <p className="mt-2 text-xs text-slate-400">
-                  Leave empty if you do not want to change the current image.
-                </p>
-              )}
+              {selectedFile && <p className="mt-2 text-xs text-emerald-600">Selected: {selectedFile.name}</p>}
+              {!isNew && !selectedFile && <p className="mt-2 text-xs text-slate-400">Leave empty if you do not want to change the current image.</p>}
             </div>
-
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-800">
-                Display Order
-              </label>
-
-              <input
-                type="number"
-                min="1"
-                value={editedSection?.sort_order || slides.length + 1}
-                onChange={(event) =>
-                  updateField("sort_order", Number(event.target.value))
-                }
-                className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                placeholder="Order number"
-              />
-
-              <p className="mt-1 text-xs text-slate-400">
-                Lower number appears first.
-              </p>
+              <label className="mb-1 block text-sm font-semibold text-slate-800">Display Order</label>
+              <input type="number" min="1" value={editedSection?.sort_order || slides.length + 1} onChange={(e) => updateField("sort_order", Number(e.target.value))} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" placeholder="Order number" />
+              <p className="mt-1 text-xs text-slate-400">Lower number appears first.</p>
             </div>
           </div>
-
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-4 font-bold text-slate-900">Preview</h3>
-
             {previewImage ? (
-              <img
-                src={previewImage}
-                className="mb-4 h-72 w-full rounded-xl object-cover"
-                alt="Wedding slide preview"
-              />
+              <img src={previewImage} className="mb-4 h-72 w-full rounded-xl object-cover" alt="Wedding slide preview" />
             ) : (
-              <div className="mb-4 flex h-72 w-full items-center justify-center rounded-xl border border-dashed bg-slate-50 text-sm text-slate-400">
-                No image selected
-              </div>
+              <div className="mb-4 flex h-72 w-full items-center justify-center rounded-xl border border-dashed bg-slate-50 text-sm text-slate-400">No image selected</div>
             )}
-
-            {editedSection?.title && (
-              <h3 className="text-lg font-bold text-slate-900">
-                {editedSection.title}
-              </h3>
-            )}
-
-            {editedSection?.subtitle && (
-              <p className="text-sm font-semibold text-orange-600">
-                {editedSection.subtitle}
-              </p>
-            )}
-
-            {editedSection?.description && (
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {editedSection.description}
-              </p>
-            )}
+            {editedSection?.title && <h3 className="text-lg font-bold text-slate-900">{editedSection.title}</h3>}
+            {editedSection?.subtitle && <p className="text-sm font-semibold text-orange-600">{editedSection.subtitle}</p>}
+            {editedSection?.description && <p className="mt-2 text-sm leading-6 text-slate-500">{editedSection.description}</p>}
           </div>
         </div>
 
-<<<<<<< HEAD
-        <div className="flex flex-col sm:flex-row justify-end gap-3">
+        <div className="flex justify-end gap-3">
           <button onClick={cancelEditSlide} className="px-4 py-2 border rounded-lg">Cancel</button>
-          <button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2 justify-center">
+          <button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2">
             {uploading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save size={15} />}
-=======
-        <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={cancelEditSlide}
-            className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold hover:bg-slate-50"
-            disabled={uploading}
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={uploading}
-            className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {uploading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <Save size={15} />
-            )}
-
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
             {isNew ? "Create Slide" : "Update Slide"}
           </button>
         </div>
@@ -903,261 +350,54 @@ export default function HeroSectionManager() {
   }
 
   return (
-<<<<<<< HEAD
     <div className="space-y-6 p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Wedding Hero Slides</h2>
           <p className="text-sm text-gray-500">Manage your wedding hero slider images and content</p>
         </div>
-        {/* BEAUTIFUL CARD-STYLE BUTTON - UPDATED */}
-        <button
-          onClick={addNewSlide}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-amber-500/25 transition-all duration-200 hover:scale-[1.02] hover:from-amber-600 hover:to-amber-700 hover:shadow-lg"
-        >
-          <Plus size={16} />
-          Add New Slide
+        <button onClick={addNewSlide} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-amber-500/25 transition-all duration-200 hover:scale-[1.02] hover:from-amber-600 hover:to-amber-700 hover:shadow-lg">
+          <Plus size={16} /> Add New Slide
         </button>
-=======
-    <div className="space-y-6 p-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-sm">
-              <Sparkles size={28} />
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                Wedding Page Management
-              </h1>
-
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Manage wedding hero slides and other wedding page sections from
-                one clean place.
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
-            {weddingSections.length} Wedding Sections
-          </div>
-        </div>
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {weddingSections.map((section) => (
-            <WeddingSectionCard
-              key={section.key}
-              section={section}
-              active={activeSection === section.key}
-              onClick={() => {
-                setActiveSection(section.key);
-                setError(null);
-                setSaved(false);
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      {error && <div className="flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-600"><AlertCircle size={16} className="mt-0.5 shrink-0" /><span>{error}</span></div>}
+      {saved && <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600"><Check size={16} /> Saved successfully!</div>}
+      {listLoading && <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-sm text-orange-700"><div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" /> Loading slides...</div>}
 
-      {activeSection !== "hero" ? (
-        <ComingSoonSection
-          section={selectedSection}
-          onBack={() => setActiveSection("hero")}
-        />
-      ) : (
-        <>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Wedding Hero Slides
-                </h2>
-
-<<<<<<< HEAD
-      <div className="space-y-3">
-        {slides?.map((slide, index) => {
-          const imageUrl = getImageUrl(slide.image_url);
-            
-          return (
-            <div key={slide.id} className="border rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white">
-              <img src={imageUrl} alt={slide.title} className="w-full sm:w-24 h-40 sm:h-24 object-cover rounded" />
-              <div className="flex-1 w-full">
-                <h3 className="font-semibold">{slide.title}</h3>
-                <p className="text-sm text-gray-500">{slide.subtitle}</p>
-                <p className="text-sm text-gray-600 line-clamp-2">{slide.description}</p>
-                <p className="text-xs text-gray-400 mt-1">Order: {slide.sort_order || index + 1} | ID: {slide.id}</p>
-              </div>
-              <div className="flex gap-2 flex-wrap w-full sm:w-auto">
-                {index > 0 && (
-                  <button onClick={() => moveSlide(index, "up")} className="p-2 border rounded hover:bg-gray-50" title="Move Up">
-                    <ArrowUp size={16} />
-                  </button>
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="space-y-3 p-4">
+          {slides?.map((slide, index) => {
+            const imageUrl = getImageUrl(slide.image_url);
+            return (
+              <div key={slide.id || index} className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+                {imageUrl ? (
+                  <img src={imageUrl} alt={slide.title || "Wedding slide"} className="h-32 w-full rounded-xl object-cover sm:h-24 sm:w-28" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                ) : (
+                  <div className="flex h-32 w-full items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-28">No image</div>
                 )}
-                {index < slides.length - 1 && (
-                  <button onClick={() => moveSlide(index, "down")} className="p-2 border rounded hover:bg-gray-50" title="Move Down">
-                    <ArrowDown size={16} />
-                  </button>
-                )}
-                <button onClick={() => editSlide(index)} className="px-3 py-1 border rounded hover:bg-gray-50">Edit</button>
-                <button onClick={() => deleteSlide(index)} className="px-3 py-1 border border-red-300 text-red-600 rounded hover:bg-red-50">Delete</button>
-=======
-                <p className="mt-1 text-sm text-slate-500">
-                  Manage your wedding hero slider images and content.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                >
-                  <RotateCcw size={16} />
-                  Reset
-                </button>
-
-                <button
-                  type="button"
-                  onClick={addNewSlide}
-                  className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
-                >
-                  <Plus size={16} />
-                  Add New Slide
-                </button>
->>>>>>> b657a5a7b356713c3a8088c81b84268624a1d9b8
-              </div>
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-600">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {saved && (
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600">
-              <Check size={16} />
-              Saved successfully!
-            </div>
-          )}
-
-          {listLoading && (
-            <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-sm text-orange-700">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-              Loading slides...
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {slides?.map((slide, index) => {
-              const imageUrl = getImageUrl(slide.image_url);
-
-              return (
-                <div
-                  key={slide.id || index}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
-                >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={slide.title || "Wedding slide"}
-                      className="h-32 w-full rounded-xl object-cover sm:h-24 sm:w-28"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="flex h-32 w-full items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-28">
-                      No image
-                    </div>
-                  )}
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-slate-900">
-                      {slide.title || "Untitled slide"}
-                    </h3>
-
-                    {slide.subtitle && (
-                      <p className="text-sm font-semibold text-orange-600">
-                        {slide.subtitle}
-                      </p>
-                    )}
-
-                    {slide.description && (
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
-                        {slide.description}
-                      </p>
-                    )}
-
-                    <p className="mt-1 text-xs text-slate-400">
-                      Order: {slide.sort_order || index + 1}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => moveSlide(index, "up")}
-                        className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
-                        title="Move Up"
-                        disabled={listLoading}
-                      >
-                        <ArrowUp size={16} />
-                      </button>
-                    )}
-
-                    {index < slides.length - 1 && (
-                      <button
-                        type="button"
-                        onClick={() => moveSlide(index, "down")}
-                        className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50"
-                        title="Move Down"
-                        disabled={listLoading}
-                      >
-                        <ArrowDown size={16} />
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => editSlide(index)}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => deleteSlide(index)}
-                      className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 size={14} />
-                      Delete
-                    </button>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-slate-900">{slide.title || "Untitled slide"}</h3>
+                  {slide.subtitle && <p className="text-sm font-semibold text-orange-600">{slide.subtitle}</p>}
+                  {slide.description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">{slide.description}</p>}
+                  <p className="mt-1 text-xs text-slate-400">Order: {slide.sort_order || index + 1}</p>
                 </div>
-              );
-            })}
-
-            {(!slides || slides.length === 0) && !listLoading && (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-500">
-                No slides yet. Click{" "}
-                <span className="font-semibold text-slate-800">
-                  Add New Slide
-                </span>{" "}
-                to create one.
+                <div className="flex flex-wrap gap-2">
+                  {index > 0 && <button onClick={() => moveSlide(index, "up")} className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50" disabled={listLoading}><ArrowUp size={16} /></button>}
+                  {index < slides.length - 1 && <button onClick={() => moveSlide(index, "down")} className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50" disabled={listLoading}><ArrowDown size={16} /></button>}
+                  <button onClick={() => editSlide(index)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Edit</button>
+                  <button onClick={() => deleteSlide(index)} className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"><Trash2 size={14} /> Delete</button>
+                </div>
               </div>
-            )}
-          </div>
-        </>
-      )}
+            );
+          })}
+          {(!slides || slides.length === 0) && !listLoading && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-500">
+              No slides yet. Click <span className="font-semibold text-slate-800">Add New Slide</span> to create one.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
