@@ -7,8 +7,9 @@ const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || "/storage";
 const apiRequest = async (url, method = "GET", body = null, token = null, isFormData = false) => {
   const options = { method, headers: {} };
   if (token) options.headers["Authorization"] = `Bearer ${token}`;
-  if (isFormData) options.body = body;
-  else {
+  if (isFormData) {
+    options.body = body;
+  } else {
     options.headers["Content-Type"] = "application/json";
     if (body) options.body = JSON.stringify(body);
   }
@@ -24,8 +25,10 @@ const apiRequest = async (url, method = "GET", body = null, token = null, isForm
 
 const getImageUrl = (path) => {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
-  if (path.startsWith('/storage')) return `${STORAGE_URL}${path}`;
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("/storage")) return `${STORAGE_URL}${path}`;
+  if (path.startsWith("storage")) return `${STORAGE_URL}/${path}`;
+  if (path.startsWith("wedding-gallery-section2")) return `${STORAGE_URL}/${path}`;
   return `${STORAGE_URL}/${path}`;
 };
 
@@ -41,24 +44,15 @@ export default function GalleryImagesManager() {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [imagePreviews, setImagePreviews] = useState({});
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      setToken(storedToken);
-      fetchImages();
-    } else {
-      setError("Please login first");
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchImages = async () => {
+  const fetchImages = async (authToken) => {
     try {
       setLoading(true);
-      const result = await apiRequest("/wedding-gallery/section2", "GET");
-      
+      const t = authToken || token;
+      const result = await apiRequest("/wedding-gallery/section2", "GET", null, t);
+
       if (result.success && result.data) {
-        setImages(result.data.images || []);
+        const fetchedImages = result.data.images || [];
+        setImages(fetchedImages);
         setSectionId(result.data.id);
         setHasChanges(false);
       } else {
@@ -70,6 +64,17 @@ export default function GalleryImagesManager() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      setToken(storedToken);
+      fetchImages(storedToken);
+    } else {
+      setError("Please login first");
+      setLoading(false);
+    }
+  }, []);
 
   const updateImageUrl = (index, value) => {
     const newImages = [...images];
@@ -93,14 +98,23 @@ export default function GalleryImagesManager() {
       return;
     }
 
+    // Clear any existing preview URL
+    if (imagePreviews[index]) {
+      URL.revokeObjectURL(imagePreviews[index]);
+    }
+
     const newSelectedFiles = { ...selectedFiles };
     const newPreviews = { ...imagePreviews };
-    
+    const newImages = [...images];
+
     newSelectedFiles[index] = file;
     newPreviews[index] = URL.createObjectURL(file);
-    
+    // Clear the image URL at this index so it doesn't get sent as a URL
+    newImages[index] = "";
+
     setSelectedFiles(newSelectedFiles);
     setImagePreviews(newPreviews);
+    setImages(newImages);
     setHasChanges(true);
     setError(null);
   };
@@ -109,54 +123,88 @@ export default function GalleryImagesManager() {
     const newImages = [...images];
     newImages[index] = "";
     setImages(newImages);
-    
-    // Remove file if exists
+
     if (selectedFiles[index]) {
       const newSelectedFiles = { ...selectedFiles };
       delete newSelectedFiles[index];
       setSelectedFiles(newSelectedFiles);
     }
     if (imagePreviews[index]) {
+      URL.revokeObjectURL(imagePreviews[index]);
       const newPreviews = { ...imagePreviews };
       delete newPreviews[index];
       setImagePreviews(newPreviews);
     }
-    
+
     setHasChanges(true);
     setSaved(false);
   };
 
   const saveImages = async () => {
     setSaving(true);
-    
+    setError(null);
+
     const formData = new FormData();
-    
-    // Add existing image URLs
-    for (let i = 0; i < images.length; i++) {
-      formData.append(`image_url_${i}`, images[i] || "");
+
+    // Send existing image URLs (but NOT blob URLs)
+    for (let i = 0; i < 30; i++) {
+      const imageValue = images[i] || "";
+      // Only send if it's not a blob URL
+      if (imageValue && !imageValue.startsWith('blob:')) {
+        formData.append(`image_url_${i}`, imageValue);
+      } else {
+        formData.append(`image_url_${i}`, "");
+      }
     }
-    
+
     // Add new files to upload
-    Object.keys(selectedFiles).forEach(index => {
+    Object.keys(selectedFiles).forEach((index) => {
       formData.append(`image_${index}`, selectedFiles[index]);
     });
 
     try {
-      let result;
-      if (sectionId) {
-        formData.append("_method", "PUT");
-        result = await apiRequest(`/admin/wedding-gallery/section2/${sectionId}`, "POST", formData, token, true);
-      } else {
-        result = await apiRequest("/admin/wedding-gallery/section2", "POST", formData, token, true);
+      let currentId = sectionId;
+
+      // If no section exists, create one
+      if (!currentId) {
+        const created = await apiRequest(
+          "/admin/wedding-gallery/section2",
+          "POST",
+          null,
+          token
+        );
+        if (created.success) {
+          currentId = created.data.id;
+          setSectionId(currentId);
+        } else {
+          setError(created.message || "Failed to initialize section");
+          setSaving(false);
+          return;
+        }
       }
+
+      formData.append("_method", "PUT");
+      const result = await apiRequest(
+        `/admin/wedding-gallery/section2/${currentId}`,
+        "POST",
+        formData,
+        token,
+        true
+      );
 
       if (result.success) {
         setHasChanges(false);
         setSaved(true);
+        
+        // Clear selected files and previews after successful save
+        Object.values(imagePreviews).forEach(preview => {
+          if (preview) URL.revokeObjectURL(preview);
+        });
         setSelectedFiles({});
         setImagePreviews({});
+        
         setTimeout(() => setSaved(false), 3000);
-        await fetchImages();
+        await fetchImages(token);
       } else {
         setError(result.message || "Error saving images");
       }
@@ -169,7 +217,11 @@ export default function GalleryImagesManager() {
   };
 
   const handleReset = () => {
-    fetchImages();
+    fetchImages(token);
+    // Clear all previews
+    Object.values(imagePreviews).forEach(preview => {
+      if (preview) URL.revokeObjectURL(preview);
+    });
     setSelectedFiles({});
     setImagePreviews({});
     setError(null);
@@ -203,18 +255,18 @@ export default function GalleryImagesManager() {
           <p className="text-sm text-gray-500">Manage up to 30 wedding gallery images</p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={handleReset} 
+          <button
+            onClick={handleReset}
             className="px-3 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50 transition"
           >
             <RotateCcw size={15} /> Reset
           </button>
-          <button 
-            onClick={saveImages} 
-            disabled={!hasChanges || saving} 
+          <button
+            onClick={saveImages}
+            disabled={!hasChanges || saving}
             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
               hasChanges && !saving
-                ? "bg-amber-500 text-white hover:bg-amber-600" 
+                ? "bg-amber-500 text-white hover:bg-amber-600"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
@@ -263,16 +315,27 @@ export default function GalleryImagesManager() {
                 />
                 <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition">
                   <Upload size={14} className="text-gray-600" />
-                  <input type="file" accept="image/*" onChange={(e) => handleFileSelect(i, e)} className="hidden" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileSelect(i, e)}
+                    className="hidden"
+                  />
                 </label>
                 {(images[i] || imagePreviews[i]) && (
-                  <button onClick={() => removeImage(i)} className="p-2 text-red-500 hover:text-red-700">
+                  <button
+                    onClick={() => removeImage(i)}
+                    className="p-2 text-red-500 hover:text-red-700"
+                  >
                     <Trash2 size={14} />
                   </button>
                 )}
               </div>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-4">
+            Tip: Upload images or paste URLs. Max 5MB per image.
+          </p>
         </div>
 
         {/* Right - Live Preview Grid */}
@@ -286,9 +349,9 @@ export default function GalleryImagesManager() {
               const previewUrl = imagePreviews[i] || getImageUrl(images[i]);
               return previewUrl ? (
                 <div key={i} className="relative group">
-                  <img 
-                    src={previewUrl} 
-                    className="h-24 w-full object-cover rounded-lg border-2 border-transparent group-hover:border-amber-500 transition-all" 
+                  <img
+                    src={previewUrl}
+                    className="h-24 w-full object-cover rounded-lg border-2 border-transparent group-hover:border-amber-500 transition-all"
                     alt={`Preview ${i + 1}`}
                     onError={(e) => {
                       e.target.src = "https://via.placeholder.com/150?text=Error";
@@ -299,22 +362,25 @@ export default function GalleryImagesManager() {
                   </div>
                 </div>
               ) : (
-                <div key={i} className="h-24 bg-gray-200 flex items-center justify-center text-xs text-gray-400 rounded-lg border border-dashed">
+                <div
+                  key={i}
+                  className="h-24 bg-gray-200 flex items-center justify-center text-xs text-gray-400 rounded-lg border border-dashed"
+                >
                   Empty
                 </div>
               );
             })}
           </div>
-          
+
           <div className="mt-4 p-3 bg-white rounded-lg">
             <p className="text-xs text-gray-500 flex items-center gap-1">
               <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-              {images.filter(img => img).length} of 30 images saved
+              {images.filter((img) => img && !img.startsWith('blob:')).length} of 30 images saved
             </p>
             {Object.keys(selectedFiles).length > 0 && (
               <p className="text-xs text-amber-500 flex items-center gap-1 mt-1">
                 <span className="inline-block w-2 h-2 bg-amber-500 rounded-full"></span>
-                {Object.keys(selectedFiles).length} new images to upload
+                {Object.keys(selectedFiles).length} new images ready to upload
               </p>
             )}
           </div>
